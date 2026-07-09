@@ -490,7 +490,8 @@ def consolidar_pdfs(pasta: Path) -> Optional[Path]:
     return juntar_pdfs(sorted(pasta.glob("*.pdf")), pasta)
 
 
-def certidao_valida_existente(pasta_base: Path, documento, modulo, margem_dias: int = 0):
+def certidao_valida_existente(pasta_base: Path, documento, modulo, margem_dias: int = 0,
+                              documento_pasta=None):
     """Acha um PDF DESTA certidão, DESTE documento, ainda não vencido.
 
     Olha todas as pastas de `pasta_base` cujo nome contém o número do documento
@@ -498,10 +499,13 @@ def certidao_valida_existente(pasta_base: Path, documento, modulo, margem_dias: 
     Considera válida a que vence daqui a mais de `margem_dias` dias. Devolve
     (caminho, data) da que vence mais longe, ou None. Documentos sem data de
     validade no nome (ex.: comprovante ISS, cartão CNPJ) nunca contam como válidos.
+
+    `documento_pasta`: quando as certidões deste documento ficam na pasta de OUTRO
+    (ex.: CPF de sócio na pasta do CNPJ), passe o dono aqui para buscar na pasta certa.
     """
     if not pasta_base.exists():
         return None
-    numero = documento.formatado.replace("/", ".")
+    numero = (documento_pasta or documento).formatado.replace("/", ".")
     base_nome = nome_documento(nome_para_tipo(modulo.nome, getattr(documento, "tipo", None)))
     if not base_nome:
         return None

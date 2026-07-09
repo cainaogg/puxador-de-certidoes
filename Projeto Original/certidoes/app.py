@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import os
 import re
+import shutil
 import threading
+import time
 import tkinter as tk
 from pathlib import Path
 from typing import Dict, List, Tuple, Union
@@ -31,7 +33,7 @@ from .base import (
     verificar_vencimentos,
 )
 from .documento import Documento, DocumentoInvalido, TipoDoc, detectar
-from .engine import executar_lote, nomear_pasta_mae
+from .engine import _pasta_do_grupo, executar_lote, nomear_pasta_mae
 from .registry import REGISTRY, por_id
 
 PASTA_BASE = paths.base_dados() / "downloads"
@@ -47,7 +49,11 @@ TEXTO_AJUDA_DOCS = (
     "coloque na mesma linha, depois do CPF. Ex.: 123.456.789-00 01/01/1980.\n\n"
     "Para a certidão do CNJ de um CPF, informe também o nome da pessoa na mesma linha "
     "(ex.: 123.456.789-00 01/01/1980 FULANO DE TAL) — o CNJ exige o nome e não há fonte "
-    "gratuita dele para CPF.")
+    "gratuita dele para CPF.\n\n"
+    "Sócio majoritário: um CPF colocado LOGO ABAIXO de um CNPJ é tratado como sócio "
+    "daquela empresa — todas as certidões dele vão para a MESMA pasta do CNPJ.\n\n"
+    "Documentos da Receita (Cartão CNPJ e CND Federal) abrem no seu navegador. Quando "
+    "você os baixar, o programa move e renomeia sozinho da pasta Downloads.")
 
 FONTE = "Inter"           # texto normal
 FONTE_BOLD = "Inter Medium"  # títulos/negrito (mais próximo do mockup que o bold sintético)
@@ -482,12 +488,26 @@ class App(ctk.CTk):
         def on_status(mid: str, valor) -> None:
             self.after(0, self._set_status, mid, valor)
 
+        inicio_sessao = time.time()
+        # Associa cada CPF ao CNPJ mais próximo ACIMA (sócio majoritário): tudo dele
+        # vai para a pasta do CNPJ. CPF sem CNPJ acima = pasta própria.
+        donos: List[Documento] = []
+        ultimo_cnpj: Documento | None = None
+        for d, _n, _no in entries:
+            if d.tipo is TipoDoc.CNPJ:
+                ultimo_cnpj = d
+                donos.append(d)
+            else:
+                donos.append(ultimo_cnpj if ultimo_cnpj is not None else d)
+
+        pendencias: List[Tuple[str, str, Path]] = []  # (modulo_id, número, pasta destino)
         try:
             total_ok = total = total_val = 0
             for i, (doc, nasc, nome) in enumerate(entries, 1):
                 if self.cancel_event.is_set():
                     self.after(0, self._append_log, "Cancelado pelo usuário.")
                     break
+                dono = donos[i - 1]
                 self.after(0, self._append_log,
                            f"\n===== Documento {i}/{len(entries)}: {doc.formatado} =====")
                 aplic = [m for m in modulos if m.aplica_para(doc.tipo)]
@@ -497,18 +517,89 @@ class App(ctk.CTk):
                                f"  (nenhuma certidão marcada se aplica a {doc.tipo.value.upper()})")
                     continue
                 resultados = executar_lote(doc, aplic, PASTA_BASE, on_log, on_status,
-                                           self.cancel_event, nasc, nome)
+                                           self.cancel_event, nasc, nome, documento_pasta=dono)
                 total_ok += sum(1 for r in resultados if r.status is Status.OK)
                 total_val += sum(1 for r in resultados if r.status is Status.JA_VALIDA)
                 total += len(resultados)
+                # Certidões que abriram no navegador para emissão manual (Receita):
+                # a gente vai importar da pasta Downloads quando você as baixar.
+                grupo = _pasta_do_grupo(PASTA_BASE, dono)
+                for r in resultados:
+                    if r.status is Status.MANUAL:
+                        pendencias.append((r.modulo_id, doc.numero, grupo))
                 self.documento_atual = doc
             extra = f" · {total_val} já válida(s) (puladas)" if total_val else ""
             self.after(0, self._append_log,
                        f"\nConcluído: {total_ok}/{total} baixada(s){extra} em {len(entries)} documento(s).")
+            if pendencias and not self.cancel_event.is_set():
+                threading.Thread(target=self._importar_downloads,
+                                 args=(pendencias, inicio_sessao), daemon=True).start()
         except Exception as exc:  # noqa: BLE001
             self.after(0, self._append_log, f"Erro geral: {type(exc).__name__}: {exc}")
         finally:
             self.after(0, self._finalizar)
+
+    def _importar_downloads(self, pendencias, inicio_sessao: float) -> None:
+        """Move da pasta Downloads os documentos manuais (Receita) desta sessão.
+
+        Só toca num PDF que: (a) foi modificado APÓS o início da sessão; (b) é
+        RECONHECIDO como certidão pelo conteúdo; e (c) tem o CNPJ/CPF de dentro
+        batendo com uma pendência. Repete de 3 em 3s e PARA assim que achar tudo
+        (ou após ~3 min). Move para a pasta do grupo e renomeia com a validade.
+        """
+        downloads = Path.home() / "Downloads"
+        if not downloads.exists():
+            return
+        restantes = list(pendencias)
+        vistos: set = set()
+        fim = time.time() + 180
+        self.after(0, self._append_log,
+                   "Aguardando os documentos manuais na pasta Downloads (movo automaticamente)…")
+        while restantes and time.time() < fim and not self.cancel_event.is_set():
+            try:
+                pdfs = sorted(downloads.glob("*.pdf"), key=lambda p: p.stat().st_mtime, reverse=True)
+            except Exception:  # noqa: BLE001
+                pdfs = []
+            for pdf in pdfs:
+                if pdf in vistos:
+                    continue
+                try:
+                    if pdf.stat().st_mtime < inicio_sessao:
+                        vistos.add(pdf)  # baixado antes da sessão -> ignora
+                        continue
+                except Exception:  # noqa: BLE001
+                    continue
+                try:
+                    texto = _texto_pdf(pdf)
+                except Exception:  # noqa: BLE001
+                    continue  # talvez ainda baixando; tenta no próximo ciclo
+                vistos.add(pdf)
+                mid = identificar_certidao(texto)
+                docpdf = documento_no_texto(texto)
+                if not mid or not docpdf:
+                    continue
+                for pend in list(restantes):
+                    pmid, pnum, pasta = pend
+                    if mid == pmid and docpdf.numero == pnum:
+                        try:
+                            pasta.mkdir(parents=True, exist_ok=True)
+                            destino = pasta / pdf.name
+                            shutil.move(str(pdf), str(destino))
+                            novo = renomear_com_validade(destino, por_id(mid), docpdf)
+                            self.after(0, self._append_log,
+                                       f"Importei da Downloads: {novo.name}  →  {pasta.parent.name}")
+                        except Exception as exc:  # noqa: BLE001
+                            self.after(0, self._append_log,
+                                       f"Não consegui importar {pdf.name}: {exc}")
+                        restantes.remove(pend)
+                        break
+            if restantes:
+                time.sleep(3)
+        if restantes:
+            nomes = sorted({por_id(p[0]).nome for p in restantes})
+            self.after(0, self._append_log,
+                       "Importador: ainda não achei na Downloads: " + "; ".join(nomes)
+                       + " — baixe-os que eu movo, ou mova manualmente depois.")
 
     def _finalizar(self) -> None:
         self.btn_buscar.configure(state="normal")

@@ -81,6 +81,18 @@ def pasta_do_documento(base: Path, documento: Documento, nome: str = "") -> Path
     return base / rotulo_documento(documento, nome) / date.today().isoformat()
 
 
+def _pasta_do_grupo(base: Path, dono: Documento) -> Path:
+    """Pasta '<base>/<pasta do dono>/<hoje>', reusando a pasta-mãe existente do dono
+    (que pode já estar renomeada para 'NOME - número'). Assim as certidões de um CPF
+    de sócio caem na MESMA pasta do CNPJ."""
+    numero_fmt = dono.formatado.replace("/", ".")
+    if base.exists():
+        for d in sorted(base.iterdir()):
+            if d.is_dir() and numero_fmt in d.name:
+                return d / date.today().isoformat()
+    return base / rotulo_documento(dono, "") / date.today().isoformat()
+
+
 def nomear_pasta_mae(pasta: Path, documento: Documento, on_log: LogCb) -> Path:
     """Renomeia a pasta-mãe (base/<rótulo>) de `pasta` para '<NOME> - <número>'.
 
@@ -165,19 +177,28 @@ def executar_lote(
     cancel_event: threading.Event,
     data_nascimento: str = "",
     nome_informado: str = "",
+    documento_pasta: Documento = None,
 ) -> List[Resultado]:
     """Executa cada módulo em sequência. Abre o navegador só se algum módulo precisar
-    (módulos de API não usam navegador)."""
-    # Cria a pasta JÁ com o número (instantâneo) e começa a baixar. O nome bonito
-    # ('<NOME> - <número>') é aplicado no FIM (nomear_pasta_mae), para não travar o
-    # início esperando a consulta do CNPJ — que em rede lenta/proxy pode demorar.
-    pasta = pasta_do_documento(pasta_base, documento, "")
+    (módulos de API não usam navegador).
+
+    `documento_pasta`: dono da pasta (ex.: o CNPJ, quando `documento` é o CPF de um
+    sócio majoritário). Se None, a pasta é a do próprio `documento`.
+    """
+    # A pasta é a do "dono" do grupo (o CNPJ, no caso de CPF de sócio) — reusa a
+    # pasta-mãe existente (mesmo já renomeada). O nome bonito é aplicado no FIM.
+    dono = documento_pasta or documento
+    pasta = _pasta_do_grupo(pasta_base, dono)
     pasta.mkdir(parents=True, exist_ok=True)
     resultados: List[Resultado] = []
     on_log(f"Pasta de saída: {pasta}")
 
-    # Certidões que já estão válidas (serão puladas) — calcula uma vez, no disco.
-    existentes = {m.id: certidao_valida_existente(pasta_base, documento, m) for m in modulos}
+    # Certidões que já estão válidas (serão puladas) — calcula uma vez, no disco
+    # (busca na pasta do grupo/dono).
+    existentes = {
+        m.id: certidao_valida_existente(pasta_base, documento, m, documento_pasta=dono)
+        for m in modulos
+    }
 
     # Precisa de navegador? Só se houver módulo de navegador que NÃO será pulado.
     precisa_navegador = any(
@@ -283,9 +304,8 @@ def executar_lote(
         on_log("Sem navegador: todas as consultas são por API.")
         rodar(None)
 
-    # No fim, nomeia a pasta-mãe pela razão social (CNPJ) / titular (CPF). Feito
-    # agora, os documentos já foram baixados — a espera da consulta não incomoda.
+    # No fim, nomeia a pasta-mãe do dono (razão social do CNPJ / titular do CPF).
     on_log("Nomeando a pasta pela razão social/titular…")
-    pasta = nomear_pasta_mae(pasta, documento, on_log)
+    pasta = nomear_pasta_mae(pasta, dono, on_log)
 
     return resultados

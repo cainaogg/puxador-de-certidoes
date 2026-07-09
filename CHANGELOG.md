@@ -6,6 +6,14 @@ Este arquivo resume o que mudou em cada versão do **Puxador de Certidões**
 ## [1.1.0] — 2026-07-09
 
 ### Novidades
+- **Sócio majoritário na pasta do CNPJ.** Um CPF colocado logo abaixo de um CNPJ
+  na lista é tratado como sócio daquela empresa: todas as certidões dele (as
+  automáticas e as importadas) vão para a MESMA pasta do CNPJ.
+- **Importa sozinho os documentos da Receita.** Cartão CNPJ e CND Federal abrem no
+  seu navegador (a Receita bloqueia automação). Agora, quando você os baixa, o
+  programa os encontra na pasta Downloads pelo conteúdo (reconhece a certidão e o
+  CNPJ/CPF dentro dela), move para a pasta certa e renomeia com a validade — sem
+  clicar em nada. Só toca em PDFs recentes, reconhecidos e que casam com a sessão.
 - **Certidão de Improbidade (CNJ) automática.** Antes abria o site para
   preenchimento manual. Agora preenche e emite sozinho; o reCAPTCHA é resolvido
   pela NopeCHA (ou por você, no modo assistido). O nome do CNPJ vem da base
