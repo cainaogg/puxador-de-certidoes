@@ -17,8 +17,8 @@ from ..base import (
     ModuloCertidao,
     Resultado,
     Status,
+    emitir_e_capturar,
     esperar_recaptcha,
-    salvar_pagina_como_pdf,
 )
 from ..documento import TipoDoc
 
@@ -84,40 +84,15 @@ class POATributos(ModuloCertidao):
             return Resultado(self.id, Status.ERRO,
                              "Não consegui preencher o CNPJ. Veja o print.")
 
-        # 4) Confirmar → captura o download (ou a certidão em nova aba).
-        baixados: dict = {}
-        page.on("download", lambda d: baixados.setdefault("d", d))
-        nova: dict = {}
-        page.context.on("page", lambda pg: nova.setdefault("p", pg))
-
+        # 4) Confirmar → captura o download OU a certidão em nova aba (robusto a
+        #    navegador que força baixar o PDF por uma aba que fecha na hora).
         # O "Confirmar" é um GWT CustomButton (div role=button com imagem). O primeiro
         # visível desse tipo é o Confirmar (o segundo é o Limpar). Assim não há risco
         # de clicar na aba "Confirmar autenticidade".
-        botao = page.locator("div.gwt-CustomButton:visible")
         ctx.log("POA Tributos: emitindo…")
-        botao.first.click(timeout=10_000)
-
-        caminho = ctx.caminho_pdf(self.id)
-        import time
-        fim = time.time() + 40
-        while time.time() < fim:
-            if "d" in baixados:
-                baixados["d"].save_as(str(caminho))
-                ctx.log(f"POA Tributos: PDF baixado em {caminho.name}")
-                return Resultado(self.id, Status.OK, "Certidão baixada.", caminho)
-            if "p" in nova and not nova["p"].is_closed():
-                aba = nova["p"]
-                try:
-                    aba.wait_for_load_state("networkidle", timeout=20_000)
-                except Exception:
-                    pass
-                salvar_pagina_como_pdf(aba, caminho)
-                ctx.log(f"POA Tributos: certidão salva em {caminho.name}")
-                return Resultado(self.id, Status.OK, "Certidão salva.", caminho)
-            page.wait_for_timeout(1_500)
-
-        return Resultado(self.id, Status.ERRO,
-                         "Não obtive o documento após Confirmar. Veja o print.")
+        def _confirmar() -> None:
+            page.locator("div.gwt-CustomButton:visible").first.click(timeout=10_000)
+        return emitir_e_capturar(page, ctx, self.id, "POA Tributos", _confirmar)
 
     def _preencher(self, page, ctx: Contexto, eh_cnpj: bool) -> bool:
         """Seleciona CPF/CNPJ e digita o documento. Retorna True se conseguiu."""

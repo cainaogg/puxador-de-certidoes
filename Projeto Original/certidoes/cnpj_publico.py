@@ -83,6 +83,17 @@ def endereco_completo(d: dict) -> str:
     return " - ".join(p for p in [linha1, cauda] if p)
 
 
+def endereco_para_form(d: dict) -> str:
+    """Endereço numa linha a partir dos campos estruturados, para preencher
+    formulários (ex.: TJRS). Ex.: 'AVENIDA X 134 APT 43 BAIRRO CIDADE UF CEP 90000000'.
+    Ainda pode conter acento/pontuação — quem preenche deve limpar se o site exigir."""
+    partes = [d.get("descricao_tipo_de_logradouro"), d.get("logradouro"), d.get("numero"),
+              d.get("complemento"), d.get("bairro"), d.get("municipio"), d.get("uf")]
+    linha = " ".join(str(p) for p in partes if p)
+    cep = d.get("cep") or ""
+    return f"{linha} CEP {cep}" if cep else linha
+
+
 def nome_e_endereco(cnpj_digitos: str) -> tuple[str, str]:
     """Retorna (razão social, endereço) ou ('','') se a consulta falhar."""
     d = consultar(cnpj_digitos)

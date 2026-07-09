@@ -38,9 +38,10 @@ CERTIDOES = {
         "Certificado de Regularidade do FGTS (CRF), emitido pela CAIXA. Mostra se a empresa "
         "está regular com o FGTS. Sai do site da CAIXA.",
     "tjrs_falencia":
-        "Certidão Judicial Cível Negativa de Falência (1º grau, TJRS). O programa abre o "
-        "site do TJRS no seu navegador para você preencher os dados (razão social, CNPJ e "
-        "endereço) e gerar a certidão. Só para CNPJ.",
+        "Certidão Judicial Cível Negativa de Falência (1º grau, TJRS). O programa preenche "
+        "e emite sozinho: consulta a razão social e o endereço do CNPJ numa base pública "
+        "gratuita (BrasilAPI) e preenche o formulário do TJRS (que não tem captcha). Só "
+        "para CNPJ. Se a consulta pública falhar, abre o site para você preencher à mão.",
     "poa_tributos":
         "CND Municipal de Porto Alegre (débitos tributários). Sai do site da prefeitura "
         "(SIAT); o captcha é resolvido automaticamente.",

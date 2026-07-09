@@ -7,15 +7,13 @@ A aba correta é "Emitir Inscrição" (ignorar "Autenticar Inscrição"). 2026-0
 
 from __future__ import annotations
 
-import time
-
 from ..base import (
     Contexto,
     ModuloCertidao,
     Resultado,
     Status,
+    emitir_e_capturar,
     esperar_recaptcha,
-    salvar_pagina_como_pdf,
 )
 from ..documento import TipoDoc
 
@@ -80,36 +78,12 @@ class POAISS(ModuloCertidao):
             return Resultado(self.id, Status.ERRO,
                              "Não consegui preencher o documento. Veja o print.")
 
-        # 4) Confirmar → captura download ou nova aba.
-        baixados: dict = {}
-        page.on("download", lambda d: baixados.setdefault("d", d))
-        nova: dict = {}
-        page.context.on("page", lambda pg: nova.setdefault("p", pg))
-
-        botao = page.locator("div.gwt-CustomButton:visible")
+        # 4) Confirmar → captura o download OU a certidão em nova aba (robusto a
+        #    navegador que força baixar o PDF por uma aba que fecha na hora).
         ctx.log("POA ISS: emitindo…")
-        botao.first.click(timeout=10_000)
-
-        caminho = ctx.caminho_pdf(self.id)
-        fim = time.time() + 40
-        while time.time() < fim:
-            if "d" in baixados:
-                baixados["d"].save_as(str(caminho))
-                ctx.log(f"POA ISS: PDF baixado em {caminho.name}")
-                return Resultado(self.id, Status.OK, "Comprovante baixado.", caminho)
-            if "p" in nova and not nova["p"].is_closed():
-                aba = nova["p"]
-                try:
-                    aba.wait_for_load_state("networkidle", timeout=20_000)
-                except Exception:
-                    pass
-                salvar_pagina_como_pdf(aba, caminho)
-                ctx.log(f"POA ISS: comprovante salvo em {caminho.name}")
-                return Resultado(self.id, Status.OK, "Comprovante salvo.", caminho)
-            page.wait_for_timeout(1_500)
-
-        return Resultado(self.id, Status.ERRO,
-                         "Não obtive o documento após Confirmar. Veja o print.")
+        def _confirmar() -> None:
+            page.locator("div.gwt-CustomButton:visible").first.click(timeout=10_000)
+        return emitir_e_capturar(page, ctx, self.id, "POA ISS", _confirmar)
 
     def _preencher(self, page, ctx: Contexto, eh_cnpj: bool) -> bool:
         """Escolhe o tipo no <select> e digita o documento. True se conseguiu."""

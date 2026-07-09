@@ -136,6 +136,92 @@ def esperar_recaptcha(page, ctx, nome: str = "", head_start: int = 25,
     return False
 
 
+def emitir_e_capturar(page, ctx, modulo_id: str, nome: str, clicar, timeout: int = 45):
+    """Aciona a emissão (`clicar`) e captura o documento de forma robusta.
+
+    Cobre os dois jeitos que o SIAT/POA entrega a certidão:
+      - abre em NOVA ABA (imprime a aba em PDF) — comportamento comum; e
+      - vem como DOWNLOAD, inclusive quando o navegador corporativo força baixar o
+        PDF por uma aba que abre e fecha na hora (Edge gerenciado da Procempa).
+
+    Por isso o listener de download é registrado em TODAS as páginas (a atual e as
+    novas abas), e a espera não quebra se a página original fechar. Os listeners
+    precisam existir ANTES do clique, então `clicar` é chamado aqui dentro.
+    """
+    import time
+
+    baixados: dict = {}
+    novas: list = []
+
+    def _on_download(d) -> None:
+        baixados.setdefault("d", d)
+
+    def _on_page(pg) -> None:
+        novas.append(pg)
+        try:
+            pg.on("download", _on_download)  # a aba nova pode virar download
+        except Exception:  # noqa: BLE001
+            pass
+
+    page.on("download", _on_download)
+    page.context.on("page", _on_page)
+
+    clicar()
+
+    caminho = ctx.caminho_pdf(modulo_id)
+    fim = time.time() + timeout
+    while time.time() < fim:
+        # 1) Download capturado (na aba principal OU numa aba nova que baixou).
+        if "d" in baixados:
+            try:
+                baixados["d"].save_as(str(caminho))
+            except Exception as exc:  # noqa: BLE001
+                return Resultado(modulo_id, Status.ERRO,
+                                 f"Documento baixou, mas não consegui salvar: {exc}")
+            ctx.log(f"{nome}: PDF baixado em {caminho.name}")
+            return Resultado(modulo_id, Status.OK, "Documento baixado.", caminho)
+
+        # 2) Certidão aberta numa aba viva.
+        for pg in list(novas):
+            try:
+                if pg.is_closed():
+                    continue
+                try:
+                    pg.wait_for_load_state("networkidle", timeout=8_000)
+                except Exception:  # noqa: BLE001
+                    pass
+                if "d" in baixados or pg.is_closed():  # virou download no meio
+                    break
+                # Se a aba É um PDF (visualizador do navegador — ex.: TJRS), baixa os
+                # bytes direto, usando a sessão/cookies do navegador. Senão (certidão
+                # em HTML — ex.: POA), imprime a página em PDF.
+                ctype = ""
+                try:
+                    ctype = (pg.evaluate("() => document.contentType") or "").lower()
+                except Exception:  # noqa: BLE001
+                    ctype = ""
+                if "pdf" in ctype or pg.url.lower().endswith(".pdf"):
+                    resp = pg.context.request.get(pg.url)
+                    caminho.parent.mkdir(parents=True, exist_ok=True)
+                    caminho.write_bytes(resp.body())
+                else:
+                    salvar_pagina_como_pdf(pg, caminho)
+            except Exception:  # noqa: BLE001 - aba pode fechar/virar download
+                continue
+            else:
+                ctx.log(f"{nome}: certidão salva em {caminho.name}")
+                return Resultado(modulo_id, Status.OK, "Documento salvo.", caminho)
+
+        # Espera curta, resiliente ao fechamento da página original.
+        try:
+            page.wait_for_timeout(1_000)
+        except Exception:  # noqa: BLE001
+            time.sleep(1.0)
+
+    return Resultado(modulo_id, Status.ERRO,
+                     "Não obtive o documento após Confirmar. Veja o print.")
+
+
 # Prazo de validade (em dias) usado SÓ como fallback quando a validade não está
 # impressa no PDF. Valores pesquisados: TCU e CGU = 30 dias; Receita/CNDT = 180.
 # Os que não estão aqui (POA ISS comprovante, SEFAZ, POA Tributos, TJRS) dependem
