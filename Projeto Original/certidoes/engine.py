@@ -167,11 +167,10 @@ def executar_lote(
 ) -> List[Resultado]:
     """Executa cada módulo em sequência. Abre o navegador só se algum módulo precisar
     (módulos de API não usam navegador)."""
-    # Nome da pasta = '<NOME> - <número>'. CNPJ: razão social (API gratuita) já na
-    # criação; CPF: não há fonte gratuita do nome, então renomeamos no fim, a partir
-    # de uma certidão baixada.
-    nome_entidade = _nome_entidade(documento)
-    pasta = pasta_do_documento(pasta_base, documento, nome_entidade)
+    # Cria a pasta JÁ com o número (instantâneo) e começa a baixar. O nome bonito
+    # ('<NOME> - <número>') é aplicado no FIM (nomear_pasta_mae), para não travar o
+    # início esperando a consulta do CNPJ — que em rede lenta/proxy pode demorar.
+    pasta = pasta_do_documento(pasta_base, documento, "")
     pasta.mkdir(parents=True, exist_ok=True)
     resultados: List[Resultado] = []
     on_log(f"Pasta de saída: {pasta}")
@@ -282,8 +281,9 @@ def executar_lote(
         on_log("Sem navegador: todas as consultas são por API.")
         rodar(None)
 
-    # Se a pasta não veio nomeada (CPF, ou CNPJ que a API não achou), tenta nomear.
-    if not nome_entidade:
-        pasta = nomear_pasta_mae(pasta, documento, on_log)
+    # No fim, nomeia a pasta-mãe pela razão social (CNPJ) / titular (CPF). Feito
+    # agora, os documentos já foram baixados — a espera da consulta não incomoda.
+    on_log("Nomeando a pasta pela razão social/titular…")
+    pasta = nomear_pasta_mae(pasta, documento, on_log)
 
     return resultados

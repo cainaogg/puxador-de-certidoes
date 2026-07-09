@@ -32,7 +32,9 @@ def consultar(cnpj_digitos: str) -> Optional[dict]:
             req = urllib.request.Request(
                 url.format(cnpj=cnpj), headers={"User-Agent": "Mozilla/5.0"}
             )
-            with urllib.request.urlopen(req, timeout=30) as resp:
+            # Timeout curto: a API responde em <1s quando está ok; não faz sentido
+            # segurar o programa 30s por uma fonte que travou (rede lenta/proxy).
+            with urllib.request.urlopen(req, timeout=12) as resp:
                 dados = json.loads(resp.read().decode("utf-8"))
             if dados.get("razao_social") or dados.get("nome"):
                 return dados

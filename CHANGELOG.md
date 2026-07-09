@@ -23,6 +23,13 @@ Este arquivo resume o que mudou em cada versão do **Puxador de Certidões**
   (`TargetClosedError`). Agora captura o download em **qualquer aba** e também
   suporta a certidão que abre como PDF numa aba nova.
 
+### Desempenho
+- **Início mais rápido.** Antes, ao começar um CNPJ, o programa ficava parado
+  (às vezes >1 min, em rede lenta/proxy) consultando a razão social só para
+  nomear a pasta. Agora a pasta é criada na hora (com o número) e o download
+  começa imediatamente; o nome ("NOME - número") é aplicado no fim. O tempo
+  limite da consulta também caiu de 30s para 12s por fonte.
+
 ## [1.0.0] — 2026-07
 
 ### Base
