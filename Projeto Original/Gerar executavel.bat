@@ -29,6 +29,8 @@ echo.
   --collect-all customtkinter ^
   --collect-all fpdf ^
   --collect-all PIL ^
+  --collect-all ddddocr ^
+  --collect-all onnxruntime ^
   %VENDOR% ^
   --add-data "assets;assets" ^
   main.py

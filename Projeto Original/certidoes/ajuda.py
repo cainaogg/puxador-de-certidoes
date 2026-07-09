@@ -32,8 +32,9 @@ CERTIDOES = {
         "CND Estadual do RS (SEFAZ-RS): certidão de situação fiscal junto ao estado do Rio "
         "Grande do Sul. Sai do site da SEFAZ (resolve o ALTCHA sozinho).",
     "cndt_trabalhista":
-        "CND Trabalhista (CNDT/TST): certidão de débitos trabalhistas. Modo assistido: o "
-        "captcha de imagem é resolvido por você na janela que abre.",
+        "CND Trabalhista (CNDT/TST): certidão de débitos trabalhistas. O captcha de texto "
+        "em imagem é resolvido automaticamente (OCR offline, gratuito), com novas tentativas "
+        "se errar. Se não conseguir, cai no modo assistido (você digita o captcha na janela).",
     "fgts_crf":
         "Certificado de Regularidade do FGTS (CRF), emitido pela CAIXA. Mostra se a empresa "
         "está regular com o FGTS. Sai do site da CAIXA.",

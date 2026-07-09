@@ -6,6 +6,10 @@ Este arquivo resume o que mudou em cada versão do **Puxador de Certidões**
 ## [1.1.0] — 2026-07-09
 
 ### Novidades
+- **CND Trabalhista (CNDT/TST) com captcha automático.** O captcha de texto em
+  imagem do TST passa a ser resolvido **sozinho** (OCR offline e gratuito, com
+  novas tentativas se errar). Antes era assistido (você digitava). Se o OCR não
+  estiver disponível, cai no modo assistido.
 - **Certidão de Falência (TJRS) automática.** Antes o programa abria o site para
   você preencher à mão. Agora ele consulta a razão social e o endereço do CNPJ
   numa base pública gratuita (BrasilAPI) e **preenche e emite sozinho** — o site
