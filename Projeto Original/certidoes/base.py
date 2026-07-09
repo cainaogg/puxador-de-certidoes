@@ -169,6 +169,15 @@ def emitir_e_capturar(page, ctx, modulo_id: str, nome: str, clicar, timeout: int
     page.on("download", _on_download)
     page.context.on("page", _on_page)
 
+    def _fechar_novas() -> None:
+        """Fecha as abas/popups que o site abriu (deixa só a página principal)."""
+        for pg in list(novas):
+            try:
+                if pg is not page and not pg.is_closed():
+                    pg.close()
+            except Exception:  # noqa: BLE001
+                pass
+
     clicar()
 
     caminho = ctx.caminho_pdf(modulo_id)
@@ -181,6 +190,7 @@ def emitir_e_capturar(page, ctx, modulo_id: str, nome: str, clicar, timeout: int
             except Exception as exc:  # noqa: BLE001
                 return Resultado(modulo_id, Status.ERRO,
                                  f"Documento baixou, mas não consegui salvar: {exc}")
+            _fechar_novas()
             ctx.log(f"{nome}: PDF baixado em {caminho.name}")
             return Resultado(modulo_id, Status.OK, "Documento baixado.", caminho)
 
@@ -212,6 +222,7 @@ def emitir_e_capturar(page, ctx, modulo_id: str, nome: str, clicar, timeout: int
             except Exception:  # noqa: BLE001 - aba pode fechar/virar download
                 continue
             else:
+                _fechar_novas()
                 ctx.log(f"{nome}: certidão salva em {caminho.name}")
                 return Resultado(modulo_id, Status.OK, "Documento salvo.", caminho)
 

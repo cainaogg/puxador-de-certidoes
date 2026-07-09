@@ -8,7 +8,7 @@ aguarda o ALTCHA resolver e o botão "Baixar Certidão" aparecer. Mapeado 2026-0
 from __future__ import annotations
 
 from . import _tcu
-from ..base import Contexto, ModuloCertidao, Resultado, Status, salvar_pagina_como_pdf
+from ..base import Contexto, ModuloCertidao, Resultado, Status
 from ..documento import TipoDoc
 
 
@@ -25,7 +25,10 @@ class TCUInidoneos(ModuloCertidao):
         ctx.log("TCU Inidôneos: abrindo o site…")
         page.goto(self.url, wait_until="domcontentloaded", timeout=60_000)
         page.wait_for_timeout(3_000)
+        return _tcu.com_retry(page, ctx, self.url, "TCU Inidôneos",
+                              lambda pg: self._tentar(pg, ctx))
 
+    def _tentar(self, page, ctx: Contexto) -> Resultado:
         # Garante o campo no modo certo (a página começa em CNPJ; p/ CPF há o
         # botão "CPF"). Sem isso, um CPF cairia no campo CNPJ. Ver _tcu.
         if not _tcu.garantir_modo(page, ctx.documento.tipo):
@@ -35,25 +38,16 @@ class TCUInidoneos(ModuloCertidao):
                 f"{ctx.documento.tipo.value.upper()}. Veja o print.",
             )
         page.locator("input[type='text']").first.fill(ctx.documento.numero, timeout=15_000)
-
         ctx.log("TCU Inidôneos: emitindo (o ALTCHA é resolvido automaticamente)…")
         page.click("#btn-emitir-certidao-inidoneos", timeout=15_000)
 
-        # Após o ALTCHA, surge "Baixar Certidão".
+        # Após o ALTCHA, surge "Baixar Certidão" (ou um erro transitório do TCU).
         baixar = page.locator(
             "button:has-text('Baixar Certidão'), a:has-text('Baixar Certidão')"
         )
-        baixar.first.wait_for(state="visible", timeout=90_000)
-
-        caminho = ctx.caminho_pdf(self.id)
         try:
-            with page.expect_download(timeout=30_000) as info:
-                baixar.first.click(timeout=15_000)
-            info.value.save_as(str(caminho))
-        except Exception:
-            paginas = page.context.pages
-            destino = paginas[-1] if len(paginas) > 1 else page
-            salvar_pagina_como_pdf(destino, caminho)
-
-        ctx.log(f"TCU Inidôneos: salvo em {caminho.name}")
-        return Resultado(self.id, Status.OK, "Certidão salva.", caminho)
+            baixar.first.wait_for(state="visible", timeout=45_000)
+        except Exception:  # noqa: BLE001
+            msg = _tcu.mensagem_erro(page) or "não apareceu 'Baixar Certidão' (o captcha expirou?)"
+            return Resultado(self.id, Status.ERRO, f"TCU Inidôneos: {msg}")
+        return _tcu.baixar_para(page, ctx, self.id, baixar, "TCU Inidôneos")

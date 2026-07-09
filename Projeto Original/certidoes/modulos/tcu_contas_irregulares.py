@@ -14,7 +14,7 @@ from __future__ import annotations
 import time
 
 from . import _tcu
-from ..base import Contexto, ModuloCertidao, Resultado, Status, salvar_pagina_como_pdf
+from ..base import Contexto, ModuloCertidao, Resultado, Status
 from ..documento import TipoDoc
 
 
@@ -28,62 +28,42 @@ class TCUContasIrregulares(ModuloCertidao):
     aceita = frozenset({TipoDoc.CPF, TipoDoc.CNPJ})
 
     def executar(self, page, ctx: Contexto) -> Resultado:
-        doc = ctx.documento
         ctx.log("TCU Contas Irregulares: abrindo o site…")
         page.goto(self.url, wait_until="domcontentloaded", timeout=60_000)
         page.wait_for_timeout(3_000)
+        return _tcu.com_retry(page, ctx, self.url, "TCU Contas Irregulares",
+                              lambda pg: self._tentar(pg, ctx))
 
-        campo = page.locator("input[type='text']").first
+    def _tentar(self, page, ctx: Contexto) -> Resultado:
+        doc = ctx.documento
         # Garante o campo no modo certo (CPF/CNPJ) ANTES de digitar (ver _tcu).
         if not _tcu.garantir_modo(page, doc.tipo):
             return Resultado(
                 self.id, Status.ERRO,
                 f"TCU Contas: não consegui alternar o campo para {doc.tipo.value.upper()}. Veja o print.",
             )
-
-        campo.fill(doc.numero, timeout=15_000)
+        page.locator("input[type='text']").first.fill(doc.numero, timeout=15_000)
         page.wait_for_timeout(600)
-        ctx.log(f"TCU Contas Irregulares: campo em modo {doc.tipo.value.upper()} preenchido.")
-
         ctx.log("TCU Contas Irregulares: emitindo (ALTCHA resolvido automaticamente)…")
         page.click("#btn-emitir-certidao", timeout=15_000)
 
-        # O ALTCHA leva alguns segundos ("Verificando…" → "Verificado"); só depois
-        # surge "Baixar Certidão" (sucesso) ou uma mensagem de erro/pendência.
-        # OBS: "irregular"/"consta" NÃO são erro (estão no título; "nada consta" é
-        # justamente o resultado negativo desejado) — por isso o regex é específico.
+        # O ALTCHA leva alguns segundos; só depois surge "Baixar Certidão" (sucesso)
+        # ou uma mensagem de erro/pendência. "irregular"/"consta" NÃO são erro (estão
+        # no título; "nada consta" é o resultado negativo desejado).
         baixar = page.locator(
             "button:has-text('Baixar Certidão'), a:has-text('Baixar Certidão')"
         )
         erro = page.locator(
             "text=/inválido|verifique os|não foi possível|pendênc|excede|limite de/i"
         )
-        fim = time.time() + 120
-        achou = False
+        fim = time.time() + 50
         while time.time() < fim:
             if baixar.count() and baixar.first.is_visible():
-                achou = True
-                break
+                return _tcu.baixar_para(page, ctx, self.id, baixar, "TCU Contas Irregulares")
             if erro.count() and erro.first.is_visible():
                 msg = (erro.first.inner_text() or "").strip().replace("\n", " ")
                 return Resultado(self.id, Status.ERRO, f"TCU Contas: {msg[:140]}")
             page.wait_for_timeout(2_000)
 
-        if not achou:
-            return Resultado(
-                self.id, Status.ERRO,
-                "TCU Contas: 'Baixar Certidão' não apareceu após emitir. Veja o print.",
-            )
-
-        caminho = ctx.caminho_pdf(self.id)
-        try:
-            with page.expect_download(timeout=30_000) as info:
-                baixar.first.click(timeout=15_000)
-            info.value.save_as(str(caminho))
-        except Exception:
-            paginas = page.context.pages
-            destino = paginas[-1] if len(paginas) > 1 else page
-            salvar_pagina_como_pdf(destino, caminho)
-
-        ctx.log(f"TCU Contas Irregulares: salvo em {caminho.name}")
-        return Resultado(self.id, Status.OK, "Certidão salva.", caminho)
+        msg = _tcu.mensagem_erro(page) or "'Baixar Certidão' não apareceu (o captcha expirou?)"
+        return Resultado(self.id, Status.ERRO, f"TCU Contas: {msg}")

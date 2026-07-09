@@ -26,6 +26,13 @@ Este arquivo resume o que mudou em cada versão do **Puxador de Certidões**
 - **Ícone próprio** do executável.
 
 ### Correções
+- **TCU (Inidôneos, Contas Julgadas, Consulta Consolidada): novas tentativas.**
+  Em rede lenta/proxy (ex.: trabalho), a plataforma do TCU às vezes falha de forma
+  intermitente ("captcha expirou", "erro no serviço", "não localizado", ou fica
+  processando). Agora o programa **tenta de novo automaticamente** (recarrega e
+  recalcula o ALTCHA), o que costuma resolver esses erros passageiros.
+- **Abas extras fechadas.** Depois de baixar/emitir uma certidão que abre em nova
+  aba (ex.: TJRS), o programa fecha as abas/popups que sobraram.
 - **CND Municipal e Comprovante ISS (Porto Alegre).** Em navegador corporativo
   que força o PDF a **baixar** por uma aba que abre e fecha na hora (ex.: Edge
   gerenciado de intranet), o programa não capturava o arquivo e dava erro
