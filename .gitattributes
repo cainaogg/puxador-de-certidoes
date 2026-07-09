@@ -1,0 +1,20 @@
+# Padroniza quebras de linha para todos que clonarem o projeto.
+
+# Por padrão: detecta arquivos de texto e normaliza para LF no repositório.
+* text=auto eol=lf
+
+# Código e textos: sempre LF.
+*.py   text eol=lf
+*.md   text eol=lf
+*.txt  text eol=lf
+
+# Arquivos .bat do Windows precisam de CRLF para funcionar direito.
+*.bat  text eol=crlf
+
+# Binários: o Git nunca deve mexer nesses.
+*.png  binary
+*.ico  binary
+*.ttf  binary
+*.pdf  binary
+*.exe  binary
+*.zip  binary
