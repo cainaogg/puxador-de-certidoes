@@ -164,6 +164,7 @@ def executar_lote(
     on_status: StatusCb,
     cancel_event: threading.Event,
     data_nascimento: str = "",
+    nome_informado: str = "",
 ) -> List[Resultado]:
     """Executa cada módulo em sequência. Abre o navegador só se algum módulo precisar
     (módulos de API não usam navegador)."""
@@ -230,6 +231,7 @@ def executar_lote(
                 log=on_log,
                 aguardar_captcha=aguardar_captcha,
                 data_nascimento=data_nascimento,
+                nome_informado=nome_informado,
             )
             try:
                 res = modulo.executar(page, ctx)

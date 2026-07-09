@@ -6,6 +6,11 @@ Este arquivo resume o que mudou em cada versão do **Puxador de Certidões**
 ## [1.1.0] — 2026-07-09
 
 ### Novidades
+- **Certidão de Improbidade (CNJ) automática.** Antes abria o site para
+  preenchimento manual. Agora preenche e emite sozinho; o reCAPTCHA é resolvido
+  pela NopeCHA (ou por você, no modo assistido). O nome do CNPJ vem da base
+  pública; para **CPF** (sócio majoritário), informe o nome na mesma linha do CPF
+  (ex.: `123.456.789-00 FULANO DE TAL`).
 - **CND Trabalhista (CNDT/TST) com captcha automático.** O captcha de texto em
   imagem do TST passa a ser resolvido **sozinho** (OCR offline e gratuito, com
   novas tentativas se errar). Antes era assistido (você digitava). Se o OCR não

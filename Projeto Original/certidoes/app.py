@@ -27,6 +27,7 @@ from .base import (
     nome_documento,
     nome_para_tipo,
     renomear_com_validade,
+    so_letras_numeros,
     verificar_vencimentos,
 )
 from .documento import Documento, DocumentoInvalido, TipoDoc, detectar
@@ -37,13 +38,16 @@ PASTA_BASE = paths.base_dados() / "downloads"
 
 PLACEHOLDER = ("Um documento por linha. Exemplos:\n"
                "12.345.678/0001-90\n"
-               "123.456.789-00 01/01/1980   (CPF: a data é para a CND Federal)")
+               "123.456.789-00 01/01/1980 FULANO DE TAL   (CPF: data p/ CND Federal, nome p/ CNJ)")
 
 TEXTO_AJUDA_DOCS = (
     "Digite um CPF ou CNPJ por linha (com ou sem pontuação). O programa baixa as "
     "certidões marcadas para o primeiro documento, depois para o próximo — pode misturar "
     "CNPJ e CPF.\n\nPara a CND Federal de um CPF, a Receita exige a data de nascimento: "
-    "coloque na mesma linha, depois do CPF. Ex.: 123.456.789-00 01/01/1980.")
+    "coloque na mesma linha, depois do CPF. Ex.: 123.456.789-00 01/01/1980.\n\n"
+    "Para a certidão do CNJ de um CPF, informe também o nome da pessoa na mesma linha "
+    "(ex.: 123.456.789-00 01/01/1980 FULANO DE TAL) — o CNJ exige o nome e não há fonte "
+    "gratuita dele para CPF.")
 
 FONTE = "Inter"           # texto normal
 FONTE_BOLD = "Inter Medium"  # títulos/negrito (mais próximo do mockup que o bold sintético)
@@ -331,9 +335,11 @@ class App(ctk.CTk):
         self.log.configure(state="disabled")
 
     # ----------------------------------------------------------- documentos
-    def _parse_documentos(self) -> Tuple[List[Tuple[Documento, str]], List[str]]:
-        """Lê o textbox: cada linha é um documento, com data de nascimento opcional."""
-        entries: List[Tuple[Documento, str]] = []
+    def _parse_documentos(self) -> Tuple[List[Tuple[Documento, str, str]], List[str]]:
+        """Lê o textbox: cada linha tem o documento e, opcionalmente, data de
+        nascimento e nome (ex.: '123.456.789-00 01/01/1980 FULANO DE TAL' — a data
+        serve à CND Federal e o nome ao CNJ, quando é um CPF)."""
+        entries: List[Tuple[Documento, str, str]] = []
         invalidas: List[str] = []
         for raw in self._texto_docs().splitlines():
             linha = raw.strip()
@@ -341,17 +347,22 @@ class App(ctk.CTk):
                 continue
             m = re.search(r"\b(\d{2}/\d{2}/\d{4})\b", linha)
             nasc = m.group(1) if m else ""
-            doc_txt = linha.replace(nasc, "") if nasc else linha
+            resto = linha.replace(nasc, "") if nasc else linha
             try:
-                entries.append((detectar(doc_txt), nasc))
+                doc = detectar(resto)
             except DocumentoInvalido:
                 invalidas.append(linha)
+                continue
+            # o que sobra (sem o número do documento) vira o nome informado
+            sem_num = resto.replace(doc.formatado, " ").replace(doc.numero, " ")
+            nome = so_letras_numeros(sem_num)
+            entries.append((doc, nasc, nome))
         return entries, invalidas
 
     def _atualizar_resumo(self) -> None:
         entries, invalidas = self._parse_documentos()
-        n_cnpj = sum(1 for d, _ in entries if d.tipo is TipoDoc.CNPJ)
-        n_cpf = sum(1 for d, _ in entries if d.tipo is TipoDoc.CPF)
+        n_cnpj = sum(1 for d, *_ in entries if d.tipo is TipoDoc.CNPJ)
+        n_cpf = sum(1 for d, *_ in entries if d.tipo is TipoDoc.CPF)
         partes = []
         if entries:
             partes.append(f"✓ {len(entries)} documento(s): {n_cnpj} CNPJ, {n_cpf} CPF")
@@ -362,7 +373,7 @@ class App(ctk.CTk):
 
         # Habilita só as certidões que servem para os tipos presentes (ex.: um CPF
         # sozinho desabilita as que são só de CNPJ). Caixa vazia = todas habilitadas.
-        tipos = {d.tipo for d, _ in entries}
+        tipos = {d.tipo for d, *_ in entries}
         for linha in self.linhas.values():
             if not linha.modulo.implementado:
                 continue
@@ -473,7 +484,7 @@ class App(ctk.CTk):
 
         try:
             total_ok = total = total_val = 0
-            for i, (doc, nasc) in enumerate(entries, 1):
+            for i, (doc, nasc, nome) in enumerate(entries, 1):
                 if self.cancel_event.is_set():
                     self.after(0, self._append_log, "Cancelado pelo usuário.")
                     break
@@ -486,7 +497,7 @@ class App(ctk.CTk):
                                f"  (nenhuma certidão marcada se aplica a {doc.tipo.value.upper()})")
                     continue
                 resultados = executar_lote(doc, aplic, PASTA_BASE, on_log, on_status,
-                                           self.cancel_event, nasc)
+                                           self.cancel_event, nasc, nome)
                 total_ok += sum(1 for r in resultados if r.status is Status.OK)
                 total_val += sum(1 for r in resultados if r.status is Status.JA_VALIDA)
                 total += len(resultados)

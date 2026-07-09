@@ -59,6 +59,9 @@ class Contexto:
     # Data de nascimento (dd/mm/aaaa), só usada em consultas de CPF que a exigem
     # (ex.: CND Federal da Receita). Vazia para CNPJ.
     data_nascimento: str = ""
+    # Nome informado pelo usuário na mesma linha (ex.: nome do CPF para o CNJ, que
+    # não tem fonte gratuita). Vazio quando não informado.
+    nome_informado: str = ""
 
     def caminho_pdf(self, modulo_id: str) -> Path:
         hoje = date.today().isoformat()
@@ -335,6 +338,17 @@ def nome_documento(nome: str) -> str:
          'CND Estadual (RS) (SEFAZ-RS)' -> 'CND Estadual (RS)'.
     """
     return re.sub(r"\s*\([^()]*\)\s*$", "", nome).strip()
+
+
+def so_letras_numeros(texto: str) -> str:
+    """Deixa só letras e números (sem acento nem símbolos), com espaços simples.
+
+    Usado em formulários que rejeitam caracteres especiais (TJRS, CNJ).
+    """
+    import unicodedata
+    t = unicodedata.normalize("NFKD", texto or "").encode("ascii", "ignore").decode("ascii")
+    t = re.sub(r"[^0-9A-Za-z ]+", " ", t)
+    return re.sub(r"\s+", " ", t).strip()
 
 
 def nome_para_tipo(nome: str, tipo: Optional[TipoDoc]) -> str:

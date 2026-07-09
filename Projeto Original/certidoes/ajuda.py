@@ -12,8 +12,10 @@ CERTIDOES = {
         "token. Para CPF, sempre abre o site (a Receita pede a data de nascimento).",
     "cnj_improbidade":
         "Certidão Negativa de Improbidade Administrativa e Inelegibilidade (CNJ). O programa "
-        "abre o site do CNJ no seu navegador para você preencher os dados e gerar a certidão "
-        "(tipo Jurídica para CNPJ, Física para CPF).",
+        "preenche e emite sozinho (tipo Jurídica para CNPJ, Física para CPF); o reCAPTCHA é "
+        "resolvido pela NopeCHA (ou por você, no modo assistido). O nome do CNPJ vem da base "
+        "pública; para CPF, informe o nome na mesma linha (ex.: '123.456.789-00 FULANO DE "
+        "TAL'). Se faltar o nome, abre o site para emissão manual.",
     "tcu_inidoneos":
         "Certidão Negativa de Licitantes Inidôneos (TCU): diz se há impedimento de "
         "participar de licitações. Sai do site do TCU; o desafio anti-robô (ALTCHA) é "

@@ -14,22 +14,20 @@ navegador). Mapeado em 2026-07-09.
 
 from __future__ import annotations
 
-import re
-import unicodedata
 import webbrowser
 
 from .. import cnpj_publico
-from ..base import Contexto, ModuloCertidao, Resultado, Status, emitir_e_capturar
+from ..base import (
+    Contexto,
+    ModuloCertidao,
+    Resultado,
+    Status,
+    emitir_e_capturar,
+    so_letras_numeros,
+)
 from ..documento import TipoDoc
 
 _OPCAO_FALENCIA = "Certidão Judicial Cível Negativa de 1º Grau - Falência"
-
-
-def _somente_letras_numeros(txt: str) -> str:
-    """Deixa só letras/números/espaços (o TJRS rejeita acentos e símbolos)."""
-    t = unicodedata.normalize("NFKD", txt or "").encode("ascii", "ignore").decode("ascii")
-    t = re.sub(r"[^0-9A-Za-z ]+", " ", t)
-    return re.sub(r"\s+", " ", t).strip()
 
 
 class TJRSFalencia(ModuloCertidao):
@@ -49,8 +47,8 @@ class TJRSFalencia(ModuloCertidao):
             return self._fallback_manual(
                 ctx, "não consegui consultar a razão social/endereço do CNPJ")
 
-        nome = _somente_letras_numeros(dados.get("razao_social") or dados.get("nome") or "")
-        endereco = _somente_letras_numeros(cnpj_publico.endereco_para_form(dados))
+        nome = so_letras_numeros(dados.get("razao_social") or dados.get("nome") or "")
+        endereco = so_letras_numeros(cnpj_publico.endereco_para_form(dados))
         if not nome or not endereco:
             return self._fallback_manual(ctx, "dados do CNPJ vieram incompletos")
 
