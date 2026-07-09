@@ -1,0 +1,41 @@
+# ============================================================================
+#  Dados PESSOAIS e SENSÍVEIS — NUNCA versionar
+# ============================================================================
+# Token da API (Infosimples) e configurações pessoais:
+config.json
+infosimples_config.json
+**/config.json
+**/infosimples_config.json
+# Certidões baixadas (dados reais de CNPJ/CPF de terceiros):
+downloads/
+**/downloads/
+# Configurações locais do editor/Claude (caminhos e histórico pessoais):
+.claude/
+# Backups locais (contêm token e dados):
+Backups/
+
+# ============================================================================
+#  Fora do escopo deste repositório (só publicamos o "Projeto Original")
+# ============================================================================
+Fork com API de consulta/
+Executaveis (prontos para usar e enviar)/
+# Extensão de terceiro (NopeCHA) — cada um baixa a sua (ver README):
+vendor/
+**/vendor/
+# Executáveis / distribuição:
+*.exe
+LEIA-ME (distribuicao).txt
+
+# ============================================================================
+#  Ambiente e artefatos de build
+# ============================================================================
+.venv/
+__pycache__/
+*.pyc
+build/
+dist/
+*.spec
+.pytest_cache/
+
+# Scripts temporários de teste (mantém test_documento.py)
+**/tests/_*
