@@ -127,6 +127,7 @@
     </div>
   </div>
 </div>
+<script type="text/javascript" src="/eel.js"></script>
 <script>
   let CERTS = [];
   const PILL = {
@@ -143,9 +144,20 @@
   function pillTxt(st){return (PILL[st]||PILL.pendente)[0]}
 
   async function init(){
-    CERTS = await window.pywebview.api.listar_certidoes();
+    CERTS = await eel.listar_certidoes()();
     render();
     document.getElementById('s-disp').textContent = CERTS.filter(c=>c.impl).length;
+    setInterval(poll, 150);   // consulta a fila de updates do Python
+  }
+  async function poll(){
+    let ups;
+    try{ ups = await eel.poll()(); }catch(e){ return; }
+    if(!ups || !ups.length) return;
+    ups.forEach(u=>{
+      if(u.t==='log') addLog(u.m);
+      else if(u.t==='status') setStatus(u.id, u.st);
+      else if(u.t==='fim') finalizar();
+    });
   }
   function render(){
     const el=document.getElementById('lista'); el.innerHTML='';
@@ -181,9 +193,9 @@
     document.getElementById('btn-buscar').disabled=true;
     document.getElementById('btn-cancelar').disabled=false;
     document.getElementById('s-ok').textContent=0;
-    window.pywebview.api.iniciar(texto, ids);
+    eel.iniciar(texto, ids)();
   }
-  function acao(nome){ window.pywebview.api.acao(nome); }
+  function acao(nome){ eel.acao(nome)(); }
 
   // ---- chamadas Python -> JS ----
   function addLog(msg){
@@ -204,7 +216,7 @@
     document.getElementById('btn-buscar').disabled=false;
     document.getElementById('btn-cancelar').disabled=true;
   }
-  window.addEventListener('pywebviewready', init);
+  window.addEventListener('load', init);
 </script>
 </body>
 </html>
