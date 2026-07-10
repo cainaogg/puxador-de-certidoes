@@ -12,7 +12,9 @@ import os
 import re
 import sys
 import threading
+import tkinter as tk
 from pathlib import Path
+from tkinter import filedialog
 
 import eel
 
@@ -20,9 +22,13 @@ import eel
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from certidoes import ajuda, paths  # noqa: E402
-from certidoes.base import Status, so_letras_numeros  # noqa: E402
+from certidoes.base import (  # noqa: E402
+    Status, _texto_pdf, documento_no_texto, identificar_certidao, juntar_pdfs,
+    nome_documento, nome_para_tipo, renomear_com_validade, so_letras_numeros,
+    verificar_vencimentos,
+)
 from certidoes.documento import DocumentoInvalido, TipoDoc, detectar  # noqa: E402
-from certidoes.engine import executar_lote  # noqa: E402
+from certidoes.engine import executar_lote, nomear_pasta_mae  # noqa: E402
 from certidoes.registry import REGISTRY, por_id  # noqa: E402
 
 PASTA_BASE = paths.base_dados() / "downloads"
@@ -87,8 +93,90 @@ def acao(nome: str) -> None:
     elif nome == "abrir_pasta":
         PASTA_BASE.mkdir(parents=True, exist_ok=True)
         os.startfile(str(PASTA_BASE))  # type: ignore[attr-defined]
+    elif nome == "escanear":
+        threading.Thread(target=_escanear, daemon=True).start()
+    elif nome == "validade":
+        threading.Thread(target=_verificador, daemon=True).start()
+    elif nome == "juntar":
+        threading.Thread(target=_juntar, daemon=True).start()
     else:
         _emit({"t": "log", "m": f"[{nome}] — em breve nesta interface (próxima fase)."})
+
+
+# ---- utilitários (Escanear / Validade / Juntar) — mesma lógica do app.py ---
+def _pedir_pasta(titulo: str):
+    root = tk.Tk()
+    root.withdraw()
+    root.attributes("-topmost", True)
+    caminho = filedialog.askdirectory(title=titulo, initialdir=str(PASTA_BASE))
+    root.destroy()
+    return caminho
+
+
+def _id_por_nome(nome_arquivo: str):
+    """Se o arquivo já começa com o nome de uma certidão conhecida, devolve o id."""
+    for modulo in REGISTRY:
+        for tipo in (TipoDoc.CNPJ, TipoDoc.CPF):
+            base = nome_documento(nome_para_tipo(modulo.nome, tipo))
+            if base and nome_arquivo.startswith(base):
+                return modulo.id
+    return None
+
+
+def _escanear() -> None:
+    origem = _pedir_pasta("Pasta com os PDFs para renomear")
+    if not origem:
+        return
+    n = 0
+    doc_pasta = None
+    for pdf in sorted(Path(origem).glob("*.pdf")):
+        try:
+            texto = _texto_pdf(pdf)
+        except Exception:  # noqa: BLE001
+            continue
+        mid = _id_por_nome(pdf.name) or identificar_certidao(texto)
+        if not mid:
+            continue
+        doc = documento_no_texto(texto)
+        doc_pasta = doc_pasta or doc
+        novo = renomear_com_validade(pdf, por_id(mid), doc)
+        if novo.name != pdf.name:
+            _emit({"t": "log", "m": f"Renomeado: {pdf.name} → {novo.name}"})
+            n += 1
+    if doc_pasta is not None:
+        nomear_pasta_mae(Path(origem), doc_pasta, lambda m: _emit({"t": "log", "m": m}))
+    _emit({"t": "log", "m": f"Escanear: {n} arquivo(s) renomeado(s)."})
+
+
+def _verificador() -> None:
+    origem = _pedir_pasta("Pasta para verificar a validade")
+    if not origem:
+        return
+    achados = verificar_vencimentos(Path(origem), dias=100000)
+    if not achados:
+        _emit({"t": "log", "m": "Verificador: nenhum PDF com validade no nome encontrado."})
+        return
+    _emit({"t": "log", "m": f"Verificador de Validade — {len(achados)} certidão(ões):"})
+    for pdf, d, restam in achados:
+        marca = "[VENCIDA]" if restam < 0 else f"[faltam {restam}d]"
+        _emit({"t": "log", "m": f"  {marca} {d.strftime('%d.%m.%Y')} — {pdf.name}"})
+
+
+def _juntar() -> None:
+    root = tk.Tk()
+    root.withdraw()
+    root.attributes("-topmost", True)
+    arquivos = filedialog.askopenfilenames(
+        title="Selecione os PDFs para juntar num só",
+        initialdir=str(PASTA_BASE), filetypes=[("PDF", "*.pdf")])
+    root.destroy()
+    if len(arquivos) < 2:
+        _emit({"t": "log", "m": "Juntar: selecione ao menos 2 PDFs."})
+        return
+    caminhos = [Path(a) for a in arquivos]
+    novo = juntar_pdfs(caminhos, caminhos[0].parent)
+    _emit({"t": "log", "m": f"Juntado ({len(caminhos)} PDFs) em: {novo}" if novo
+           else "Juntar: não consegui gerar o PDF."})
 
 
 # ---- execução (thread) ----------------------------------------------------
