@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Puxador de Certidões</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#0B0F17; --panel:#121826; --panelAlt:#182233; --border:#232C3D;
@@ -17,6 +20,8 @@
     background:var(--bg); color:var(--text); font-size:13.5px; overflow:hidden;
   }
   .app{display:flex; height:100vh}
+  .rail svg,.stat .ic svg,.btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+  .logo svg{width:19px;height:19px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
   /* ---------- barra lateral ---------- */
   .rail{width:68px; background:var(--panelAlt); border-right:1px solid var(--border);
     display:flex; flex-direction:column; align-items:center; padding:14px 0; gap:8px}
@@ -85,31 +90,31 @@
 <body>
 <div class="app">
   <div class="rail">
-    <div class="logo">📄</div>
-    <button class="ativo" title="Painel">▦</button>
-    <button title="Escanear baixados" onclick="acao('escanear')">⌷</button>
-    <button title="Verificador de validade" onclick="acao('validade')">🛡</button>
-    <button title="Abrir pasta" onclick="acao('abrir_pasta')">🗀</button>
-    <button title="Juntar PDFs" onclick="acao('juntar')">▤</button>
+    <div class="logo"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/></svg></div>
+    <button class="ativo" title="Painel"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg></button>
+    <button title="Escanear baixados" onclick="acao('escanear')"><svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
+    <button title="Verificador de validade" onclick="acao('validade')"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></button>
+    <button title="Abrir pasta" onclick="acao('abrir_pasta')"><svg viewBox="0 0 24 24"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8L10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z"/></svg></button>
+    <button title="Juntar PDFs" onclick="acao('juntar')"><svg viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></button>
     <div class="sep"></div>
-    <button title="Ajuda" onclick="acao('ajuda')">?</button>
-    <button title="Configurações" onclick="acao('config')">⚙</button>
+    <button title="Ajuda" onclick="acao('ajuda')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r=".6" fill="currentColor" stroke="none"/></svg></button>
+    <button title="Configurações" onclick="acao('config')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
   </div>
   <div class="main">
     <div class="content">
       <h1>Puxador de Certidões</h1>
       <div class="sub">Baixe todas as certidões de um CNPJ ou CPF de uma vez</div>
       <div class="cards">
-        <div class="card stat"><div class="ic">📄</div><div><div class="num" id="s-disp">0</div><div class="lbl">Certidões disponíveis</div></div></div>
-        <div class="card stat"><div class="ic">✓</div><div><div class="num" id="s-sel">0</div><div class="lbl">Selecionadas</div></div></div>
-        <div class="card stat"><div class="ic" style="color:#22C55E;background:rgba(34,197,94,.12)">🛡</div><div><div class="num" id="s-ok">0</div><div class="lbl">Concluídas</div></div></div>
+        <div class="card stat"><div class="ic"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg></div><div><div class="num" id="s-disp">0</div><div class="lbl">Certidões disponíveis</div></div></div>
+        <div class="card stat"><div class="ic"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><div><div class="num" id="s-sel">0</div><div class="lbl">Selecionadas</div></div></div>
+        <div class="card stat"><div class="ic" style="color:#22C55E;background:rgba(34,197,94,.12)"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></div><div><div class="num" id="s-ok">0</div><div class="lbl">Concluídas</div></div></div>
       </div>
       <div class="grid2">
         <div class="card">
           <h2>Documentos</h2>
           <div class="h-sub">Um CNPJ ou CPF por linha</div>
           <textarea id="docs" placeholder="12.345.678/0001-90&#10;123.456.789-00 01/01/1980 FULANO DE TAL&#10;(CPF: data p/ CND Federal, nome p/ CNJ)"></textarea>
-          <button class="btn btn-primary" id="btn-buscar" onclick="buscar()">⬇ Buscar e baixar</button>
+          <button class="btn btn-primary" id="btn-buscar" onclick="buscar()"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Buscar e baixar</button>
           <button class="btn btn-outline" id="btn-cancelar" onclick="acao('cancelar')" disabled>Cancelar</button>
         </div>
         <div class="card">

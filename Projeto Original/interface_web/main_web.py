@@ -10,8 +10,10 @@ from __future__ import annotations
 
 import os
 import re
+import shutil
 import sys
 import threading
+import time
 import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog
@@ -28,7 +30,7 @@ from certidoes.base import (  # noqa: E402
     verificar_vencimentos,
 )
 from certidoes.documento import DocumentoInvalido, TipoDoc, detectar  # noqa: E402
-from certidoes.engine import executar_lote, nomear_pasta_mae  # noqa: E402
+from certidoes.engine import _pasta_do_grupo, executar_lote, nomear_pasta_mae  # noqa: E402
 from certidoes.registry import REGISTRY, por_id  # noqa: E402
 
 PASTA_BASE = paths.base_dados() / "downloads"
@@ -198,6 +200,8 @@ def _rodar(entries, modulos) -> None:
         else:
             donos.append(ultimo_cnpj if ultimo_cnpj is not None else d)
 
+    inicio_sessao = time.time()
+    pendencias = []  # (modulo_id, número, pasta destino) p/ importar da Downloads
     try:
         for i, (doc, nasc, nome) in enumerate(entries):
             if _cancel.is_set():
@@ -211,13 +215,73 @@ def _rodar(entries, modulos) -> None:
             if not aplic:
                 _emit({"t": "log", "m": f"  (nenhuma certidão marcada se aplica a {doc.tipo.value.upper()})"})
                 continue
-            executar_lote(doc, aplic, PASTA_BASE, on_log, on_status,
-                          _cancel, nasc, nome, documento_pasta=donos[i])
+            resultados = executar_lote(doc, aplic, PASTA_BASE, on_log, on_status,
+                                       _cancel, nasc, nome, documento_pasta=donos[i])
+            grupo = _pasta_do_grupo(PASTA_BASE, donos[i])
+            for r in resultados:
+                if r.status is Status.MANUAL:
+                    pendencias.append((r.modulo_id, doc.numero, grupo))
         _emit({"t": "log", "m": "\nConcluído."})
+        if pendencias and not _cancel.is_set():
+            threading.Thread(target=_importar_downloads,
+                             args=(pendencias, inicio_sessao), daemon=True).start()
     except Exception as exc:  # noqa: BLE001
         _emit({"t": "log", "m": f"Erro geral: {type(exc).__name__}: {exc}"})
     finally:
         _emit({"t": "fim"})
+
+
+def _importar_downloads(pendencias, inicio_sessao: float) -> None:
+    """Move da Downloads os documentos manuais da Receita desta sessão (mesma lógica
+    do app.py): recentes + reconhecidos + CNPJ/CPF batendo. Para ao achar tudo (~3 min)."""
+    downloads = Path.home() / "Downloads"
+    if not downloads.exists():
+        return
+    restantes = list(pendencias)
+    vistos: set = set()
+    fim = time.time() + 180
+    _emit({"t": "log", "m": "Aguardando os documentos manuais na pasta Downloads (movo automaticamente)…"})
+    while restantes and time.time() < fim and not _cancel.is_set():
+        try:
+            pdfs = sorted(downloads.glob("*.pdf"), key=lambda p: p.stat().st_mtime, reverse=True)
+        except Exception:  # noqa: BLE001
+            pdfs = []
+        for pdf in pdfs:
+            if pdf in vistos:
+                continue
+            try:
+                if pdf.stat().st_mtime < inicio_sessao:
+                    vistos.add(pdf)
+                    continue
+            except Exception:  # noqa: BLE001
+                continue
+            try:
+                texto = _texto_pdf(pdf)
+            except Exception:  # noqa: BLE001
+                continue  # talvez ainda baixando
+            vistos.add(pdf)
+            mid = identificar_certidao(texto)
+            docpdf = documento_no_texto(texto)
+            if not mid or not docpdf:
+                continue
+            for pend in list(restantes):
+                pmid, pnum, pasta = pend
+                if mid == pmid and docpdf.numero == pnum:
+                    try:
+                        pasta.mkdir(parents=True, exist_ok=True)
+                        destino = pasta / pdf.name
+                        shutil.move(str(pdf), str(destino))
+                        novo = renomear_com_validade(destino, por_id(mid), docpdf)
+                        _emit({"t": "log", "m": f"Importei da Downloads: {novo.name}  →  {pasta.parent.name}"})
+                    except Exception as exc:  # noqa: BLE001
+                        _emit({"t": "log", "m": f"Não consegui importar {pdf.name}: {exc}"})
+                    restantes.remove(pend)
+                    break
+        if restantes:
+            time.sleep(3)
+    if restantes:
+        nomes = sorted({por_id(p[0]).nome for p in restantes})
+        _emit({"t": "log", "m": "Importador: ainda não achei na Downloads: " + "; ".join(nomes)})
 
 
 def _parse(texto: str):
