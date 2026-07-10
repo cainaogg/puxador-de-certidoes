@@ -575,17 +575,18 @@ class App(ctk.CTk):
                     continue  # talvez ainda baixando; tenta no próximo ciclo
                 vistos.add(pdf)
                 mid = identificar_certidao(texto)
-                docpdf = documento_no_texto(texto)
-                if not mid or not docpdf:
+                if not mid:
                     continue
+                # Casa por DÍGITOS: robusto a CNPJ com espaços (Cartão CNPJ da Receita).
+                digitos = re.sub(r"\D", "", texto)
                 for pend in list(restantes):
                     pmid, pnum, pasta = pend
-                    if mid == pmid and docpdf.numero == pnum:
+                    if mid == pmid and pnum in digitos:
                         try:
                             pasta.mkdir(parents=True, exist_ok=True)
                             destino = pasta / pdf.name
                             shutil.move(str(pdf), str(destino))
-                            novo = renomear_com_validade(destino, por_id(mid), docpdf)
+                            novo = renomear_com_validade(destino, por_id(mid), detectar(pnum))
                             self.after(0, self._append_log,
                                        f"Importei da Downloads: {novo.name}  →  {pasta.parent.name}")
                         except Exception as exc:  # noqa: BLE001

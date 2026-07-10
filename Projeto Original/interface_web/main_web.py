@@ -15,6 +15,7 @@ import sys
 import threading
 import time
 import tkinter as tk
+import webbrowser
 from pathlib import Path
 from tkinter import filedialog
 
@@ -85,7 +86,17 @@ def salvar_config(modo, token):
 def listar_certidoes():
     return [{"id": m.id, "label": m.nome,
              "desc": ajuda.CERTIDOES.get(m.id, m.descricao or ""),
+             "site": bool(getattr(m, "url", "")),
              "impl": bool(m.implementado)} for m in REGISTRY]
+
+
+@eel.expose
+def abrir_site(mid):
+    url = getattr(por_id(mid), "url", "")
+    if url:
+        webbrowser.open(url)
+    else:
+        _emit({"t": "log", "m": "Esta certidão não tem site próprio para abrir."})
 
 
 @eel.expose
@@ -278,17 +289,18 @@ def _importar_downloads(pendencias, inicio_sessao: float) -> None:
                 continue  # talvez ainda baixando
             vistos.add(pdf)
             mid = identificar_certidao(texto)
-            docpdf = documento_no_texto(texto)
-            if not mid or not docpdf:
+            if not mid:
                 continue
+            # Casa por DÍGITOS: robusto a CNPJ com espaços (Cartão CNPJ da Receita).
+            digitos = re.sub(r"\D", "", texto)
             for pend in list(restantes):
                 pmid, pnum, pasta = pend
-                if mid == pmid and docpdf.numero == pnum:
+                if mid == pmid and pnum in digitos:
                     try:
                         pasta.mkdir(parents=True, exist_ok=True)
                         destino = pasta / pdf.name
                         shutil.move(str(pdf), str(destino))
-                        novo = renomear_com_validade(destino, por_id(mid), docpdf)
+                        novo = renomear_com_validade(destino, por_id(mid), detectar(pnum))
                         _emit({"t": "log", "m": f"Importei da Downloads: {novo.name}  →  {pasta.parent.name}"})
                     except Exception as exc:  # noqa: BLE001
                         _emit({"t": "log", "m": f"Não consegui importar {pdf.name}: {exc}"})
