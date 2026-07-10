@@ -21,8 +21,10 @@ from tkinter import filedialog
 
 import eel
 
-# Permite importar o pacote `certidoes` (um nível acima desta pasta).
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+# Rodando do código: permite importar `certidoes` (um nível acima). No .exe, o
+# PyInstaller já embute o pacote — não mexe no path.
+if not getattr(sys, "frozen", False):
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from certidoes import ajuda, config, paths  # noqa: E402
 from certidoes.base import (  # noqa: E402
@@ -35,7 +37,9 @@ from certidoes.engine import _pasta_do_grupo, executar_lote, nomear_pasta_mae  #
 from certidoes.registry import REGISTRY, por_id  # noqa: E402
 
 PASTA_BASE = paths.base_dados() / "downloads"
-WEB = Path(__file__).resolve().parent
+# Pasta da UI: no .exe (onefile) fica em _MEIPASS/interface_web; no código, aqui.
+WEB = (Path(getattr(sys, "_MEIPASS", "")) / "interface_web"
+       if getattr(sys, "frozen", False) else Path(__file__).resolve().parent)
 
 # Status do motor -> chave de estilo no JS (ver PILL no index.html).
 _ST = {
