@@ -102,6 +102,9 @@
   .seg button{flex:1;padding:10px;border-radius:9px;border:1px solid var(--border);
     background:transparent;color:var(--text);cursor:pointer;font-size:12.5px}
   .seg button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .swatches{display:flex;gap:12px}
+  .swatch{width:34px;height:34px;border-radius:999px;border:none;cursor:pointer;padding:0}
+  .swatch.on{outline:2px solid var(--text);outline-offset:2px}
   .modal input[type=password]{width:100%;background:var(--inputBg);border:1px solid var(--border);
     border-radius:9px;color:var(--text);padding:10px;font-size:13px}
   /* scrollbar fina */
@@ -175,6 +178,8 @@
   function pillTxt(st){return (PILL[st]||PILL.pendente)[0]}
 
   async function init(){
+    const cfg = await eel.carregar_config()();
+    if(cfg && cfg.accent) document.documentElement.style.setProperty('--accent', cfg.accent);
     CERTS = await eel.listar_certidoes()();
     render();
     document.getElementById('s-disp').textContent = CERTS.filter(c=>c.impl).length;
@@ -185,7 +190,7 @@
     try{ ups = await eel.poll()(); }catch(e){ return; }
     if(!ups || !ups.length) return;
     ups.forEach(u=>{
-      if(u.t==='log') addLog(u.m);
+      if(u.t==='log') addLog(u.m, u.cor);
       else if(u.t==='status') setStatus(u.id, u.st);
       else if(u.t==='fim') finalizar();
     });
@@ -250,19 +255,30 @@
         </div></div>
       <div class="campo"><label>Token da API Infosimples (para o modo API)</label>
         <input type="password" id="cfg-token" value="${esc(c.token)}" placeholder="cole seu token aqui"></div>
+      <div class="campo"><label>Cor de destaque</label>
+        <div class="swatches">${ACCENTS.map(cor=>`<button class="swatch ${cor===c.accent?'on':''}" data-cor="${cor}" style="background:${cor}" onclick="setAccent('${cor}')"></button>`).join('')}</div></div>
       <button class="btn btn-primary" onclick="salvarConfig()">Salvar</button>`);
   }
   function setModo(m){ _modo=m;
     document.getElementById('m-nav').classList.toggle('on', m==='navegador');
     document.getElementById('m-api').classList.toggle('on', m==='api'); }
   function salvarConfig(){ eel.salvar_config(_modo, document.getElementById('cfg-token').value)(); fecharModal(); }
+  const ACCENTS=['#3B82F6','#8B5CF6','#16A34A','#C8952E','#E8763C','#E5484D'];
+  function setAccent(cor){
+    document.documentElement.style.setProperty('--accent', cor);
+    eel.salvar_accent(cor)();
+    document.querySelectorAll('.swatch').forEach(s=>s.classList.toggle('on', s.dataset.cor===cor));
+  }
 
   // ---- chamadas Python -> JS ----
-  function addLog(msg){
+  const CORLOG={vermelho:'#ff6b6b',amarelo:'#e0b341',verde:'#6ee39b'};
+  function addLog(msg, cor){
     const l=document.getElementById('log');
-    l.textContent += msg+"\n";
-    // cap 200 linhas
-    const linhas=l.textContent.split("\n"); if(linhas.length>200)l.textContent=linhas.slice(-200).join("\n");
+    const div=document.createElement('div');
+    div.textContent=msg;
+    if(cor&&CORLOG[cor]){ div.style.color=CORLOG[cor]; div.style.fontWeight='600'; }
+    l.appendChild(div);
+    while(l.childElementCount>250) l.removeChild(l.firstChild);
     l.scrollTop=l.scrollHeight;
   }
   function setStatus(id,st){

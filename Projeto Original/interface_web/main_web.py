@@ -78,12 +78,18 @@ def texto_ajuda():
 def carregar_config():
     c = config.carregar()
     return {"modo": c.get("receita_modo", "navegador"),
-            "token": c.get("infosimples_token", "")}
+            "token": c.get("infosimples_token", ""),
+            "accent": c.get("accent", "#3B82F6")}
 
 
 @eel.expose
 def salvar_config(modo, token):
     config.salvar(receita_modo=modo, infosimples_token=(token or "").strip())
+
+
+@eel.expose
+def salvar_accent(cor):
+    config.salvar(accent=cor)
 
 
 @eel.expose
@@ -192,8 +198,13 @@ def _verificador() -> None:
         return
     _emit({"t": "log", "m": f"Verificador de Validade — {len(achados)} certidão(ões):"})
     for pdf, d, restam in achados:
-        marca = "[VENCIDA]" if restam < 0 else f"[faltam {restam}d]"
-        _emit({"t": "log", "m": f"  {marca} {d.strftime('%d.%m.%Y')} — {pdf.name}"})
+        if restam < 0:
+            marca, cor = "[VENCIDA]", "vermelho"
+        elif restam <= 7:
+            marca, cor = f"[faltam {restam}d]", "amarelo"
+        else:
+            marca, cor = f"[faltam {restam}d]", "verde"
+        _emit({"t": "log", "m": f"  {marca} {d.strftime('%d.%m.%Y')} — {pdf.name}", "cor": cor})
 
 
 def _juntar() -> None:

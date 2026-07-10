@@ -22,7 +22,7 @@ echo Gerando o executavel da NOVA interface (Edge modo-app)...
 echo (pode levar alguns minutos)
 echo.
 "%PY%" -m PyInstaller --noconfirm --clean --windowed --onefile ^
-  --name "Puxador de Certidoes (nova)" ^
+  --name "Puxador de Certidoes" ^
   --icon "..\assets\icone.ico" ^
   --paths . ^
   --collect-all playwright ^
@@ -36,5 +36,5 @@ echo.
   --add-data "interface_web;interface_web" ^
   "interface_web\main_web.py"
 echo.
-echo Pronto! O executavel esta em: dist\Puxador de Certidoes (nova).exe
+echo Pronto! O executavel esta em: dist\Puxador de Certidoes.exe
 pause

@@ -13,6 +13,8 @@ PADRAO = {
     # manualmente) ou "api" (baixa automaticamente pela API da Infosimples).
     "receita_modo": "navegador",
     "infosimples_token": "",
+    # Cor de destaque da interface nova (webview). Um dos 6 hex do seletor.
+    "accent": "#3B82F6",
 }
 
 
