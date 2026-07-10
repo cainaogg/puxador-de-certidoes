@@ -79,7 +79,8 @@ def carregar_config():
     c = config.carregar()
     return {"modo": c.get("receita_modo", "navegador"),
             "token": c.get("infosimples_token", ""),
-            "accent": c.get("accent", "#3B82F6")}
+            "accent": c.get("accent", "#3B82F6"),
+            "tema": c.get("tema", "dark")}
 
 
 @eel.expose
@@ -90,6 +91,11 @@ def salvar_config(modo, token):
 @eel.expose
 def salvar_accent(cor):
     config.salvar(accent=cor)
+
+
+@eel.expose
+def salvar_tema(tema):
+    config.salvar(tema=tema)
 
 
 @eel.expose

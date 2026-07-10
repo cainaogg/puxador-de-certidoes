@@ -15,6 +15,8 @@ PADRAO = {
     "infosimples_token": "",
     # Cor de destaque da interface nova (webview). Um dos 6 hex do seletor.
     "accent": "#3B82F6",
+    # Tema da interface nova: "dark" (padrão) ou "light".
+    "tema": "dark",
 }
 
 
