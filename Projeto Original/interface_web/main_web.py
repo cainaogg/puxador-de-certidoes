@@ -23,7 +23,7 @@ import eel
 # Permite importar o pacote `certidoes` (um nível acima desta pasta).
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from certidoes import ajuda, paths  # noqa: E402
+from certidoes import ajuda, config, paths  # noqa: E402
 from certidoes.base import (  # noqa: E402
     Status, _texto_pdf, documento_no_texto, identificar_certidao, juntar_pdfs,
     nome_documento, nome_para_tipo, renomear_com_validade, so_letras_numeros,
@@ -62,6 +62,23 @@ def poll():
         out = list(_fila)
         _fila.clear()
     return out
+
+
+@eel.expose
+def texto_ajuda():
+    return ajuda.PROGRAMA
+
+
+@eel.expose
+def carregar_config():
+    c = config.carregar()
+    return {"modo": c.get("receita_modo", "navegador"),
+            "token": c.get("infosimples_token", "")}
+
+
+@eel.expose
+def salvar_config(modo, token):
+    config.salvar(receita_modo=modo, infosimples_token=(token or "").strip())
 
 
 @eel.expose
