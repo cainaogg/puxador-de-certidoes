@@ -3,7 +3,7 @@
 Este arquivo resume o que mudou em cada versão do **Puxador de Certidões**
 (apenas a versão original em Python).
 
-## [2.0.0] — 2026-07-13
+## [2.1.0] — 2026-07-13
 
 ### Nova interface
 - **Interface visual reformulada.** A tela foi redesenhada do zero (HTML/CSS
