@@ -11,6 +11,7 @@ from __future__ import annotations
 import os
 import re
 import shutil
+import subprocess
 import sys
 import threading
 import time
@@ -138,7 +139,13 @@ def acao(nome: str) -> None:
         _emit({"t": "log", "m": "Cancelamento solicitado (encerra após a certidão atual)."})
     elif nome == "abrir_pasta":
         PASTA_BASE.mkdir(parents=True, exist_ok=True)
-        os.startfile(str(PASTA_BASE))  # type: ignore[attr-defined]
+        # explorer.exe (processo separado) é confiável no .exe; os.startfile
+        # roda numa greenlet do eel e às vezes não abre a janela (COM).
+        try:
+            subprocess.Popen(["explorer", str(PASTA_BASE)])
+        except Exception:  # noqa: BLE001
+            os.startfile(str(PASTA_BASE))  # type: ignore[attr-defined]
+        _emit({"t": "log", "m": "Abrindo a pasta de downloads…"})
     elif nome == "escanear":
         threading.Thread(target=_escanear, daemon=True).start()
     elif nome == "validade":
