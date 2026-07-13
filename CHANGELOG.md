@@ -3,6 +3,37 @@
 Este arquivo resume o que mudou em cada versão do **Puxador de Certidões**
 (apenas a versão original em Python).
 
+## [2.0.0] — 2026-07-13
+
+### Nova interface
+- **Interface visual reformulada.** A tela foi redesenhada do zero (HTML/CSS
+  modernos), fiel ao design: tipografia, ícones, espaçamentos e a lista de
+  certidões com visual mais limpo. O motor que baixa as certidões é o mesmo —
+  só a aparência e a usabilidade mudaram.
+- **Tema claro/escuro.** Botão sol/lua no menu lateral alterna entre os dois
+  temas; a escolha fica salva.
+- **Cor de destaque personalizável.** Em Configurações há um seletor com 6
+  cores para a cor de destaque da interface.
+- **Botão do site em cada certidão.** Cada linha da lista tem um botão que abre
+  o site oficial daquela certidão no navegador — útil para as que exigem
+  emissão manual.
+- **Cores no verificador de validade.** Ao escanear os vencimentos, cada
+  documento aparece colorido: verde (ok), amarelo (vence em até 7 dias) e
+  vermelho (vencido).
+
+### Correções
+- **Botão "Abrir pasta" volta a funcionar no executável.** No .exe ele não abria
+  a pasta de downloads; agora abre pelo Explorer do Windows.
+- **Importa o Cartão CNPJ sozinho.** O novo Cartão CNPJ da Receita imprime o
+  número com espaços, o que impedia o reconhecimento na pasta Downloads. Agora
+  ele é reconhecido pelos dígitos, movido e renomeado como as demais.
+
+### Observações
+- A interface abre em uma **janela de aplicativo do Edge do Windows**,
+  independente do seu navegador padrão (mesmo que use Chrome ou Firefox).
+- Na **primeira abertura** o programa leva alguns segundos para carregar (o
+  executável se descompacta a cada início) — isso é normal.
+
 ## [1.1.0] — 2026-07-09
 
 ### Novidades
