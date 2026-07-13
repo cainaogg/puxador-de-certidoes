@@ -89,17 +89,36 @@
   .wpill{font-size:11.5px; font-weight:700; padding:2px 9px; border-radius:999px; background:var(--aPendBg); color:#9fb0c8; flex:none}
   .wfoot{margin-top:14px; padding-top:10px; border-top:1px solid var(--aBorder); font-size:12.5px; color:var(--aSub); display:flex; justify-content:space-between}
 
-  /* ---- Botão de download ---- */
-  .dl{display:flex; align-items:center; gap:16px; text-decoration:none; background:var(--accent); color:#fff;
-      border-radius:14px; padding:18px 22px; margin:26px 0; box-shadow:var(--shadow); transition:filter .15s}
-  .dl:hover{filter:brightness(1.07)}
-  .dl:focus-visible{outline:3px solid var(--accent); outline-offset:3px}
-  .dl .dlic{width:44px; height:44px; border-radius:11px; background:rgba(255,255,255,.18); display:flex; align-items:center; justify-content:center; flex:none}
-  .dl .dlic svg{width:24px; height:24px; fill:none; stroke:#fff; stroke-width:2; stroke-linecap:round; stroke-linejoin:round}
+  /* ---- Download: link discreto no topo + botão suave no fim ---- */
+  .hdr{display:flex; justify-content:space-between; align-items:flex-start; gap:20px; flex-wrap:wrap}
+  .hdr-txt{flex:1 1 340px}
+  .dltop{display:inline-flex; align-items:center; gap:8px; text-decoration:none; flex:none; margin-top:6px;
+         background:var(--panel); color:var(--accent); border:1px solid var(--border); border-radius:10px;
+         padding:9px 14px; font-size:15px; font-weight:600; box-shadow:var(--shadow); white-space:nowrap; transition:border-color .15s}
+  .dltop:hover{border-color:var(--accent)}
+  .dltop:focus-visible{outline:3px solid var(--accent); outline-offset:2px}
+  .dltop svg{width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round}
+
+  .dl{display:flex; align-items:center; gap:14px; text-decoration:none; background:#3E5C86; color:#fff;
+      border-radius:13px; padding:15px 20px; margin:6px 0; transition:filter .15s}
+  .dl:hover{filter:brightness(1.08)}
+  .dl:focus-visible{outline:3px solid #3E5C86; outline-offset:3px}
+  .dl .dlic{width:40px; height:40px; border-radius:10px; background:rgba(255,255,255,.16); display:flex; align-items:center; justify-content:center; flex:none}
+  .dl .dlic svg{width:22px; height:22px; fill:none; stroke:#fff; stroke-width:2; stroke-linecap:round; stroke-linejoin:round}
   .dl .dltxt{display:flex; flex-direction:column; line-height:1.3}
-  .dl .dltxt b{font-size:19px} .dl .dltxt small{font-size:14px; opacity:.92}
-  .dl .dlarrow{margin-left:auto; font-size:26px; opacity:.9}
+  .dl .dltxt b{font-size:18px} .dl .dltxt small{font-size:13.5px; opacity:.9}
+  .dl .dlarrow{margin-left:auto; font-size:24px; opacity:.85}
   .dlnote{font-size:14px; color:var(--sub); margin:-14px 0 0; text-align:center}
+
+  /* contatos no rodapé */
+  .contact{display:flex; gap:12px; justify-content:center; margin-top:12px}
+  .cbtn{display:inline-flex; align-items:center; justify-content:center; width:46px; height:46px; border-radius:12px;
+        background:var(--panel); border:1px solid var(--border); color:var(--accent); box-shadow:var(--shadow); transition:.15s}
+  .cbtn:hover{border-color:var(--accent); transform:translateY(-1px)}
+  .cbtn:focus-visible{outline:3px solid var(--accent); outline-offset:2px}
+  .cbtn svg{width:23px; height:23px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round}
+  .cnote{margin:12px 0 0; font-size:14.5px}
+  .cnote a{color:var(--accent); text-decoration:none} .cnote a:hover{text-decoration:underline}
 
   /* ---- Aviso ---- */
   .callout{ background:var(--panel); border:1px solid var(--border); border-left:5px solid var(--accent);
@@ -165,10 +184,16 @@
 <div class="page">
 <div class="wrap">
 
-  <header>
-    <p class="kicker">Guia de uso</p>
-    <h1>Puxador de Certidões</h1>
-    <p class="tagline">Baixe, de uma vez, todas as certidões de um ou mais CNPJ/CPF — já renomeadas com a validade e organizadas em pastas. Este guia mostra o passo a passo, com calma.</p>
+  <header class="hdr">
+    <div class="hdr-txt">
+      <p class="kicker">Guia de uso</p>
+      <h1>Puxador de Certidões</h1>
+      <p class="tagline">Baixe, de uma vez, todas as certidões de um ou mais CNPJ/CPF — já renomeadas com a validade e organizadas em pastas. Este guia mostra o passo a passo, com calma.</p>
+    </div>
+    <a class="dltop" href="https://github.com/cainaogg/puxador-de-certidoes/releases/latest" aria-label="Baixar o programa (GitHub)">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <span>Baixar programa</span>
+    </a>
   </header>
 
   <!-- VEJA O PROGRAMA -->
@@ -224,12 +249,6 @@
       </div>
     </div>
   </div>
-
-  <a class="dl" href="https://github.com/cainaogg/puxador-de-certidoes/releases/latest">
-    <span class="dlic"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
-    <span class="dltxt"><b>Baixar a versão mais recente</b><small>Puxador de Certidoes.exe · Windows · portátil, não precisa instalar</small></span>
-    <span class="dlarrow">→</span>
-  </a>
 
   <div class="callout">
     <h2>Antes de começar — 3 coisas que é bom saber</h2>
@@ -382,7 +401,18 @@
     <p class="dlnote">Abre a página de <i>releases</i> no GitHub. Você precisa ter acesso ao repositório para baixar.</p>
   </div>
 
-  <p class="foot">Puxador de Certidões — guia de uso. Em caso de dúvida, procure o responsável que te enviou o programa.</p>
+  <div class="foot">
+    <p style="margin:0">Puxador de Certidões — guia de uso. Em caso de dúvida, fale comigo:</p>
+    <div class="contact">
+      <a class="cbtn" href="mailto:caina@outlook.com" title="caina@outlook.com" aria-label="Enviar e-mail para caina@outlook.com">
+        <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+      </a>
+      <a class="cbtn" href="https://www.instagram.com/Cainaogs" target="_blank" rel="noopener" title="Instagram @Cainaogs" aria-label="Abrir o Instagram @Cainaogs">
+        <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5.5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.1" fill="currentColor" stroke="none"/></svg>
+      </a>
+    </div>
+    <p class="cnote"><a href="mailto:caina@outlook.com">caina@outlook.com</a> &nbsp;·&nbsp; <a href="https://www.instagram.com/Cainaogs" target="_blank" rel="noopener">@Cainaogs</a></p>
+  </div>
 
 </div>
 </div>
