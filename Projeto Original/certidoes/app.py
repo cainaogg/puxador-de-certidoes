@@ -577,11 +577,12 @@ class App(ctk.CTk):
                 mid = identificar_certidao(texto)
                 if not mid:
                     continue
-                # Casa por DÍGITOS: robusto a CNPJ com espaços (Cartão CNPJ da Receita).
-                digitos = re.sub(r"\D", "", texto)
+                # Casa por ALFANUMÉRICO (maiúsculas): robusto a CNPJ com espaços e
+                # ao CNPJ alfanumérico (novo formato). pnum já vem limpo.
+                alnum = re.sub(r"[^0-9A-Za-z]", "", texto).upper()
                 for pend in list(restantes):
                     pmid, pnum, pasta = pend
-                    if mid == pmid and pnum in digitos:
+                    if mid == pmid and pnum in alnum:
                         try:
                             pasta.mkdir(parents=True, exist_ok=True)
                             destino = pasta / pdf.name

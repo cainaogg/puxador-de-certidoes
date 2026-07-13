@@ -28,6 +28,12 @@ Este arquivo resume o que mudou em cada versão do **Puxador de Certidões**
   número com espaços, o que impedia o reconhecimento na pasta Downloads. Agora
   ele é reconhecido pelos dígitos, movido e renomeado como as demais.
 
+### Compatibilidade
+- **CNPJ alfanumérico (jul/2026).** Reconhece e valida o novo formato de CNPJ com
+  letras — 12 posições alfanuméricas + 2 dígitos verificadores (cálculo por
+  ASCII−48, módulo 11), conforme o Anexo Único da IN RFB nº 2.119. Os CNPJs
+  numéricos que já existem continuam funcionando igual.
+
 ### Observações
 - A interface abre em uma **janela de aplicativo do Edge do Windows**,
   independente do seu navegador padrão (mesmo que use Chrome ou Firefox).
