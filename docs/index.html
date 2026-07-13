@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Guia de uso do Puxador de Certidões — como baixar certidões de CNPJ/CPF.">
+<title>Guia do Puxador de Certidões</title>
+<style>
+  :root{
+    --bg:#EEF1F6; --panel:#FFFFFF; --panel2:#F5F7FB; --border:#D7DEE8;
+    --text:#1A2233; --sub:#5A6678; --accent:#2563EB; --accentSoft:#DCE7FE;
+    --ok:#15803D; --okBg:#DCFCE7; --manual:#B45309; --manualBg:#FEF3C7;
+    --erro:#B91C1C; --erroBg:#FEE2E2; --pend:#64748B; --pendBg:#EAEEF4;
+    --shadow:0 1px 2px rgba(16,26,48,.06),0 8px 24px rgba(16,26,48,.06);
+    /* cores fixas da "tela do app" (o programa é escuro) */
+    --aBg:#0B0F17; --aPanel:#121826; --aPanelAlt:#182233; --aBorder:#232C3D;
+    --aText:#E7ECF3; --aSub:#8996AA; --aInput:#0E1420; --aAccent:#3B82F6; --aPendBg:#1b2536;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0A0D14; --panel:#121826; --panel2:#0E1420; --border:#243044;
+      --text:#E7ECF3; --sub:#95A2B6; --accent:#5B93FB; --accentSoft:#16233B;
+      --ok:#4ADE80; --okBg:#13291C; --manual:#FBBF24; --manualBg:#2A2410;
+      --erro:#F87171; --erroBg:#2A1414; --pend:#8996AA; --pendBg:#1A2233;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:#EEF1F6; --panel:#FFFFFF; --panel2:#F5F7FB; --border:#D7DEE8;
+    --text:#1A2233; --sub:#5A6678; --accent:#2563EB; --accentSoft:#DCE7FE;
+    --ok:#15803D; --okBg:#DCFCE7; --manual:#B45309; --manualBg:#FEF3C7;
+    --erro:#B91C1C; --erroBg:#FEE2E2; --pend:#64748B; --pendBg:#EAEEF4;
+    --shadow:0 1px 2px rgba(16,26,48,.06),0 8px 24px rgba(16,26,48,.06);
+  }
+  :root[data-theme="dark"]{
+    --bg:#0A0D14; --panel:#121826; --panel2:#0E1420; --border:#243044;
+    --text:#E7ECF3; --sub:#95A2B6; --accent:#5B93FB; --accentSoft:#16233B;
+    --ok:#4ADE80; --okBg:#13291C; --manual:#FBBF24; --manualBg:#2A2410;
+    --erro:#F87171; --erroBg:#2A1414; --pend:#8996AA; --pendBg:#1A2233;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0}
+  .page{ font-family:"Segoe UI",system-ui,Roboto,Arial,sans-serif; background:var(--bg); color:var(--text);
+         font-size:18px; line-height:1.65; padding:40px 20px 80px; }
+  .wrap{max-width:820px; margin:0 auto}
+  .mono{font-family:Consolas,"Courier New",monospace}
+
+  .kicker{font-size:14px; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); font-weight:700; margin:0 0 10px}
+  h1{font-size:38px; line-height:1.15; margin:0 0 10px; font-weight:800; text-wrap:balance; letter-spacing:-.01em}
+  .tagline{font-size:20px; color:var(--sub); margin:0; max-width:60ch}
+
+  /* ---- "Veja o programa": recriação fiel da janela ---- */
+  .herocap{margin:26px 0 10px; font-size:15px; color:var(--sub)}
+  .scroller{overflow-x:auto; border-radius:14px; box-shadow:var(--shadow)}
+  .window{ background:var(--aBg); border:1px solid var(--aBorder); border-radius:14px;
+           display:grid; grid-template-columns:58px 1fr; min-width:760px; color:var(--aText);
+           font-family:"Segoe UI",system-ui,sans-serif; }
+  .window svg{width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round}
+  .pin{display:inline-flex; align-items:center; justify-content:center; width:23px; height:23px; border-radius:50%;
+       background:var(--aAccent); color:#fff; font-size:13px; font-weight:800; font-variant-numeric:tabular-nums;
+       flex:none; box-shadow:0 0 0 2px var(--aBg), 0 1px 3px rgba(0,0,0,.4)}
+  .pinrow{display:flex; align-items:center; gap:8px}
+  .wrail{display:flex; flex-direction:column; align-items:center; gap:6px; padding:12px 0; border-right:1px solid var(--aBorder)}
+  .wrail .ib{width:38px; height:38px; border-radius:9px; display:flex; align-items:center; justify-content:center; color:var(--aSub)}
+  .wrail .ib.on{background:rgba(59,130,246,.16); color:var(--aAccent)}
+  .wrail .gap{flex:1}
+  .wrail .line{width:26px; height:1px; background:var(--aBorder); margin:4px 0}
+  .wmain{padding:18px 20px}
+  .wtitle{font-size:21px; font-weight:800; letter-spacing:-.01em}
+  .wsub{font-size:13px; color:var(--aSub); margin-top:2px}
+  .wstats{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:14px 0}
+  .wstat{background:var(--aPanel); border:1px solid var(--aBorder); border-radius:10px; padding:12px 14px; display:flex; gap:10px; align-items:center}
+  .wstat .big{font-size:22px; font-weight:800; font-variant-numeric:tabular-nums}
+  .wstat .cap{font-size:12px; color:var(--aSub)}
+  .wgrid{display:grid; grid-template-columns:230px 1fr; gap:14px}
+  .wpanel{background:var(--aPanel); border:1px solid var(--aBorder); border-radius:10px; padding:12px 14px}
+  .wlbl{font-size:12px; color:var(--aSub); text-transform:uppercase; letter-spacing:.05em; font-weight:700}
+  .wfield{background:var(--aInput); border:1px solid var(--aBorder); border-radius:8px; padding:10px 12px; margin-top:8px; font-family:Consolas,monospace; font-size:13px; line-height:1.8; color:#aeb9cc; min-height:96px}
+  .wbtn{background:var(--aAccent); color:#fff; border-radius:9px; padding:11px; text-align:center; font-weight:700; font-size:15px; margin-top:12px}
+  .wcancel{text-align:center; color:var(--aSub); font-size:14px; margin-top:10px}
+  .wrow{display:flex; align-items:center; gap:10px; padding:9px 4px; border-top:1px solid var(--aBorder); font-size:14px}
+  .wrow:first-child{border-top:0}
+  .wrow .chk{width:15px; height:15px; border:1.5px solid var(--aSub); border-radius:4px; flex:none}
+  .wrow .nm{flex:1}
+  .wrow .mini{width:22px; height:22px; border:1px solid var(--aBorder); border-radius:6px; color:var(--aSub); display:flex; align-items:center; justify-content:center; font-size:12px; flex:none}
+  .wrow .mini svg{width:13px; height:13px}
+  .wpill{font-size:11.5px; font-weight:700; padding:2px 9px; border-radius:999px; background:var(--aPendBg); color:#9fb0c8; flex:none}
+  .wfoot{margin-top:14px; padding-top:10px; border-top:1px solid var(--aBorder); font-size:12.5px; color:var(--aSub); display:flex; justify-content:space-between}
+
+  /* ---- Botão de download ---- */
+  .dl{display:flex; align-items:center; gap:16px; text-decoration:none; background:var(--accent); color:#fff;
+      border-radius:14px; padding:18px 22px; margin:26px 0; box-shadow:var(--shadow); transition:filter .15s}
+  .dl:hover{filter:brightness(1.07)}
+  .dl:focus-visible{outline:3px solid var(--accent); outline-offset:3px}
+  .dl .dlic{width:44px; height:44px; border-radius:11px; background:rgba(255,255,255,.18); display:flex; align-items:center; justify-content:center; flex:none}
+  .dl .dlic svg{width:24px; height:24px; fill:none; stroke:#fff; stroke-width:2; stroke-linecap:round; stroke-linejoin:round}
+  .dl .dltxt{display:flex; flex-direction:column; line-height:1.3}
+  .dl .dltxt b{font-size:19px} .dl .dltxt small{font-size:14px; opacity:.92}
+  .dl .dlarrow{margin-left:auto; font-size:26px; opacity:.9}
+  .dlnote{font-size:14px; color:var(--sub); margin:-14px 0 0; text-align:center}
+
+  /* ---- Aviso ---- */
+  .callout{ background:var(--panel); border:1px solid var(--border); border-left:5px solid var(--accent);
+            border-radius:12px; padding:20px 22px; margin:30px 0; box-shadow:var(--shadow); }
+  .callout h2{font-size:19px; margin:0 0 8px}
+  .callout ul{margin:8px 0 0; padding-left:20px} .callout li{margin:7px 0}
+
+  /* ---- Passos ---- */
+  .steps{display:flex; flex-direction:column; gap:26px; margin-top:14px}
+  .step{ background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:24px; box-shadow:var(--shadow);
+         display:grid; grid-template-columns:56px 1fr; gap:20px; align-items:start; }
+  .num{ width:56px; height:56px; border-radius:50%; background:var(--accent); color:#fff; font-size:26px; font-weight:800;
+        display:flex; align-items:center; justify-content:center; font-variant-numeric:tabular-nums; }
+  .step h3{font-size:23px; margin:2px 0 8px; line-height:1.25; text-wrap:balance}
+  .step p{margin:0 0 12px} .step p:last-child{margin-bottom:0}
+  .tip{font-size:16px; color:var(--sub)} .tip b{color:var(--text)}
+
+  /* mini-telas dentro dos passos */
+  .box{background:var(--aBg); border:1px solid var(--aBorder); border-radius:10px; padding:12px 14px; margin:6px 0 2px; color:var(--aText); font-family:"Segoe UI",system-ui,sans-serif}
+  .box .field{background:var(--aInput); border:1px solid var(--aBorder); border-radius:8px; padding:10px 12px; margin-top:6px; font-family:Consolas,monospace; font-size:14px; line-height:1.9}
+  .box .sel{background:var(--aAccent); color:#fff; border-radius:3px; padding:1px 4px}
+  .box .lrow{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 2px; border-top:1px solid var(--aBorder); font-size:14.5px}
+  .box .lrow:first-child{border-top:0}
+  .badge{display:inline-block; font-size:13px; font-weight:700; padding:3px 10px; border-radius:999px; white-space:nowrap}
+  .b-ok{background:var(--okBg); color:var(--ok)} .b-manual{background:var(--manualBg); color:var(--manual)}
+  .b-erro{background:var(--erroBg); color:var(--erro)} .b-pend{background:var(--pendBg); color:var(--pend)}
+
+  .logbox{background:var(--aInput); border:1px solid var(--aBorder); border-radius:8px; padding:12px 14px; font-family:Consolas,monospace; font-size:14px; line-height:1.9; margin-top:8px}
+  .c-verde{color:#6ee39b} .c-amarelo{color:#e0b341} .c-vermelho{color:#ff6b6b}
+
+  /* barra lateral explicada (ícones reais) */
+  .icons{display:flex; flex-wrap:wrap; gap:12px; margin-top:8px}
+  .icg{display:flex; align-items:center; gap:10px; background:var(--panel2); border:1px solid var(--border); border-radius:10px; padding:8px 14px 8px 10px}
+  .icg .glyph{width:38px; height:38px; border-radius:9px; background:var(--aBg); border:1px solid var(--aBorder); color:var(--accent); display:flex; align-items:center; justify-content:center}
+  .icg .glyph svg{width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round}
+  .icg .nm{font-size:16px; font-weight:600}
+
+  .section{margin-top:40px}
+  .section h2{font-size:26px; margin:0 0 6px; letter-spacing:-.01em}
+  .section > p.intro{color:var(--sub); margin:0 0 18px}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+  .mini2{background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:18px 20px; box-shadow:var(--shadow)}
+  .mini2 h4{margin:0 0 6px; font-size:18px} .mini2 p{margin:0; font-size:16px; color:var(--sub)}
+
+  .faq{background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:8px 22px; box-shadow:var(--shadow)}
+  .faq details{border-bottom:1px solid var(--border); padding:14px 0} .faq details:last-child{border-bottom:0}
+  .faq summary{font-size:18px; font-weight:700; cursor:pointer; list-style:none; display:flex; justify-content:space-between; align-items:center; gap:12px}
+  .faq summary::-webkit-details-marker{display:none}
+  .faq summary::after{content:"+"; color:var(--accent); font-size:24px; font-weight:800; line-height:1}
+  .faq details[open] summary::after{content:"–"}
+  .faq details p{margin:10px 0 2px; color:var(--sub); font-size:16.5px}
+
+  .foot{margin-top:44px; padding-top:20px; border-top:1px solid var(--border); color:var(--sub); font-size:15px; text-align:center}
+
+  @media (max-width:560px){
+    .page{font-size:17px} h1{font-size:30px}
+    .step{grid-template-columns:1fr; gap:12px} .num{width:48px; height:48px; font-size:22px}
+    .grid2{grid-template-columns:1fr}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="page">
+<div class="wrap">
+
+  <header>
+    <p class="kicker">Guia de uso</p>
+    <h1>Puxador de Certidões</h1>
+    <p class="tagline">Baixe, de uma vez, todas as certidões de um ou mais CNPJ/CPF — já renomeadas com a validade e organizadas em pastas. Este guia mostra o passo a passo, com calma.</p>
+  </header>
+
+  <!-- VEJA O PROGRAMA -->
+  <p class="herocap">É esta a tela que você vai ver. Os números <b>azuis na imagem</b> marcam as 3 áreas: <b>1</b> o menu lateral (ícones) · <b>2</b> onde você cola os CNPJs/CPFs · <b>3</b> a lista das certidões.</p>
+  <div class="scroller">
+    <div class="window">
+      <div class="wrail">
+        <div class="pin" style="margin-bottom:6px">1</div>
+        <div class="ib"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div>
+        <div class="ib on"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg></div>
+        <div class="ib"><svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg></div>
+        <div class="ib"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></div>
+        <div class="ib"><svg viewBox="0 0 24 24"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8L10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z"/></svg></div>
+        <div class="ib"><svg viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></div>
+        <div class="gap"></div>
+        <div class="ib"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r=".6" fill="currentColor" stroke="none"/></svg></div>
+        <div class="ib"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+        <div class="ib"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></div>
+      </div>
+      <div class="wmain">
+        <div class="wtitle">Puxador de Certidões</div>
+        <div class="wsub">Baixe todas as certidões de um CNPJ ou CPF de uma vez</div>
+        <div class="wstats">
+          <div class="wstat"><span class="big">13</span><span class="cap">Certidões<br>disponíveis</span></div>
+          <div class="wstat"><span class="big">0</span><span class="cap">Selecionadas</span></div>
+          <div class="wstat"><span class="big">0</span><span class="cap">Concluídas</span></div>
+        </div>
+        <div class="wgrid">
+          <div>
+            <div class="wpanel">
+              <div class="pinrow"><span class="pin">2</span><span class="wlbl">Documentos</span></div>
+              <div class="wsub" style="margin:2px 0 0">Um CNPJ ou CPF por linha</div>
+              <div class="wfield">04.017.371/0001-37<br>016.298.220-86<br>&nbsp;</div>
+            </div>
+            <div class="wbtn">⬇ Buscar e baixar</div>
+            <div class="wcancel">Cancelar</div>
+          </div>
+          <div class="wpanel">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
+              <div class="pinrow"><span class="pin">3</span><span class="wlbl" style="font-size:13px">Certidões</span></div>
+              <div class="wsub">☐ Marcar todas</div>
+            </div>
+            <div class="wrow"><span class="chk"></span><span class="nm">Consulta CNPJ (gov.br)</span><span class="mini"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg></span><span class="mini">?</span><span class="wpill">Pendente</span></div>
+            <div class="wrow"><span class="chk"></span><span class="nm">CND Municipal (POA)</span><span class="mini"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg></span><span class="mini">?</span><span class="wpill">Pendente</span></div>
+            <div class="wrow"><span class="chk"></span><span class="nm">CND Estadual (SEFAZ-RS)</span><span class="mini"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg></span><span class="mini">?</span><span class="wpill">Pendente</span></div>
+            <div class="wrow"><span class="chk"></span><span class="nm">CND Federal CNPJ (RFB/PGFN)</span><span class="mini"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg></span><span class="mini">?</span><span class="wpill">Pendente</span></div>
+            <div class="wrow"><span class="chk"></span><span class="nm">CND Trabalhista (CNDT)</span><span class="mini"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg></span><span class="mini">?</span><span class="wpill">Pendente</span></div>
+            <div class="wrow"><span class="chk"></span><span class="nm">Certificado FGTS (CRF)</span><span class="mini"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg></span><span class="mini">?</span><span class="wpill">Pendente</span></div>
+            <div class="wrow"><span class="chk"></span><span class="nm">Consulta CEIS CNPJ (CGU)</span><span class="mini"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg></span><span class="mini">?</span><span class="wpill">Pendente</span></div>
+          </div>
+        </div>
+        <div class="wfoot"><span>Registro de atividade</span><span>▸ mostrar</span></div>
+      </div>
+    </div>
+  </div>
+
+  <a class="dl" href="https://github.com/cainaogg/puxador-de-certidoes/releases/latest">
+    <span class="dlic"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
+    <span class="dltxt"><b>Baixar a versão mais recente</b><small>Puxador de Certidoes.exe · Windows · portátil, não precisa instalar</small></span>
+    <span class="dlarrow">→</span>
+  </a>
+
+  <div class="callout">
+    <h2>Antes de começar — 3 coisas que é bom saber</h2>
+    <ul>
+      <li><b>Não precisa instalar.</b> É um arquivo só (<span class="mono">Puxador de Certidoes.exe</span>). Você dá dois cliques e ele abre.</li>
+      <li><b>Na primeira vez demora alguns segundos</b> para aparecer a janela. Isso é normal — ele está se preparando. Espere.</li>
+      <li><b>Ele abre numa janela do Edge</b> (o navegador do Windows), mesmo que você use outro navegador no dia a dia. É assim mesmo.</li>
+    </ul>
+  </div>
+
+  <div class="steps">
+
+    <div class="step">
+      <div class="num">1</div>
+      <div>
+        <h3>Abra o programa</h3>
+        <p>Dê dois cliques no arquivo <span class="mono">Puxador de Certidoes.exe</span>. Vai abrir a janela “Puxador de Certidões” que você viu acima.</p>
+        <p class="tip">Se demorar, aguarde alguns segundos — ela vai aparecer. Não clique várias vezes.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">2</div>
+      <div>
+        <h3>Digite os CNPJs e CPFs</h3>
+        <p>No campo <b>Documentos</b>, escreva <b>um por linha</b>. Pode ser com ou sem pontos e traços — tanto faz.</p>
+        <div class="box">
+          <div style="font-size:12px;color:var(--aSub);text-transform:uppercase;letter-spacing:.05em;font-weight:700">Documentos</div>
+          <div class="field">04.017.371/0001-37<br>12.ABC.345/01DE-35<br><span class="sel">016.298.220-86 16/10/1990</span></div>
+        </div>
+        <p class="tip" style="margin-top:12px"><b>Sócio:</b> um <b>CPF logo abaixo</b> de um CNPJ é tratado como sócio — as certidões dele vão para a <b>mesma pasta</b> da empresa.</p>
+        <p class="tip"><b>CPF (Receita):</b> para a certidão de CPF, a Receita pede a <b>data de nascimento</b> — coloque na mesma linha, ex.: <span class="mono">016.298.220-86 16/10/1990</span>.</p>
+        <p class="tip"><b>CNPJ com letras:</b> os CNPJs novos (a partir de 2026) podem ter letras. O programa reconhece normalmente.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">3</div>
+      <div>
+        <h3>Clique em “Buscar e baixar”</h3>
+        <p>Deixe marcadas as certidões que quer (ou use <b>“Marcar todas”</b>). Depois é só clicar no botão azul <b>Buscar e baixar</b>.</p>
+        <p class="tip">Cada linha ainda tem dois botõezinhos: <b>↗</b> abre o site oficial daquela certidão, e <b>?</b> explica o que ela é.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">4</div>
+      <div>
+        <h3>Acompanhe pelas cores</h3>
+        <p>O programa passa por cada certidão. O selo ao lado mostra a situação:</p>
+        <div class="box">
+          <div class="lrow"><span>CND Trabalhista (CNDT)</span> <span class="badge b-ok">✓ Baixado</span></div>
+          <div class="lrow"><span>Certificado FGTS (CRF)</span> <span class="badge b-ok">✓ Baixado</span></div>
+          <div class="lrow"><span>CND Federal CNPJ (RFB/PGFN)</span> <span class="badge b-manual">⚠ Emitir manualmente</span></div>
+        </div>
+        <p class="tip" style="margin-top:12px">
+          <span class="badge b-ok">✓ Baixado</span> pronto &nbsp;·&nbsp;
+          <span class="badge b-manual">⚠ Emitir manualmente</span> precisa de você (Passo 5) &nbsp;·&nbsp;
+          <span class="badge b-erro">✗ Erro</span> não conseguiu (pode tentar de novo)
+        </p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">5</div>
+      <div>
+        <h3>As certidões manuais — só o captcha é com você</h3>
+        <p>Alguns órgãos não deixam o programa preencher sozinho. Nesses casos ele <b>abre o site pra você</b>, e você só precisa <b>resolver o “não sou um robô” (captcha)</b> e clicar em emitir/baixar. O programa então <b>encontra o arquivo, move e renomeia</b> sozinho — você não arrasta nada.</p>
+        <div class="callout" style="margin:14px 0 12px; border-left-color:var(--manual)">
+          <h2 style="color:var(--manual)">Três certidões <u>sempre</u> pedem você</h2>
+          <ul>
+            <li><b>CND Federal (Receita)</b></li>
+            <li><b>Consulta CNPJ / Cartão CNPJ (Receita)</b></li>
+            <li><b>CEIS (CGU)</b> — o captcha dela nenhum programa resolve.</li>
+          </ul>
+        </div>
+        <p class="tip"><b>Depende da rede:</b> as <b>outras</b> certidões normalmente resolvem o captcha sozinhas, mas em <b>algumas redes</b> (por exemplo, a internet do trabalho, com proxy/bloqueios) elas também podem pedir sua ajuda. Quando isso acontece, é a mesma coisa: o programa mostra o site e <b>espera você resolver</b> — depois segue sozinho.</p>
+        <p class="tip"><b>Não feche</b> a janela do programa enquanto ele espera um documento manual — é ele que vai buscar e organizar o arquivo.</p>
+      </div>
+    </div>
+
+  </div><!-- /steps -->
+
+  <div class="section">
+    <h2>O menu lateral (os ícones da esquerda)</h2>
+    <p class="intro">No programa aparece <b>só o ícone</b> — o nome surge quando você <b>passa o mouse por cima</b>. Estes são os mais usados:</p>
+    <div class="icons">
+      <div class="icg"><span class="glyph"><svg viewBox="0 0 24 24"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8L10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z"/></svg></span><span class="nm">Abrir pasta</span></div>
+      <div class="icg"><span class="glyph"><svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg></span><span class="nm">Escanear baixados</span></div>
+      <div class="icg"><span class="glyph"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></span><span class="nm">Verificar validade</span></div>
+      <div class="icg"><span class="glyph"><svg viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></span><span class="nm">Juntar PDFs</span></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Onde ficam os arquivos</h2>
+    <p class="intro">Tudo vai para uma pasta organizada por empresa/pessoa, com a validade no nome de cada arquivo. Clique no ícone de <b>pasta</b> (Abrir pasta) a qualquer momento para vê-los.</p>
+    <div class="grid2">
+      <div class="mini2">
+        <h4>Verificar validade</h4>
+        <p style="margin-bottom:8px">Mostra o que está perto de vencer, por cores:</p>
+        <div class="logbox">
+          <span class="c-verde">[faltam 45d] 12.09.2026 — CND Federal.pdf</span><br>
+          <span class="c-amarelo">[faltam 5d] 18.07.2026 — FGTS.pdf</span><br>
+          <span class="c-vermelho">[VENCIDA] 30.06.2026 — Trabalhista.pdf</span>
+        </div>
+      </div>
+      <div class="mini2"><h4>Juntar PDFs</h4><p>Une vários documentos num único PDF, na ordem que você escolher.</p></div>
+      <div class="mini2"><h4>Tema claro ou escuro</h4><p>Botão de sol/lua no menu lateral. Escolha o que enxergar melhor — fica salvo.</p></div>
+      <div class="mini2"><h4>Cor de destaque</h4><p>Em Configurações dá para trocar a cor do programa entre 6 opções.</p></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Dúvidas comuns</h2>
+    <div class="faq">
+      <details open>
+        <summary>Está demorando pra abrir. É normal?</summary>
+        <p>Sim. Principalmente na primeira vez do dia, ele leva alguns segundos para se preparar antes de mostrar a janela. Espere um pouco — não clique várias vezes.</p>
+      </details>
+      <details>
+        <summary>Ele abriu no Edge, mas eu uso o Chrome. Está errado?</summary>
+        <p>Não. O programa sempre usa uma janela do Edge (que já vem no Windows), independente do seu navegador do dia a dia. É o funcionamento normal.</p>
+      </details>
+      <details>
+        <summary>Apareceu “Emitir manualmente”. E agora?</summary>
+        <p>É uma certidão que exige você resolver o captcha. Sempre são a CND Federal, a Consulta/Cartão CNPJ e o CEIS — e, dependendo da rede, pode ser mais alguma. O programa já abriu o site: resolva o “não sou um robô”, clique em emitir/baixar, e ele organiza o arquivo sozinho. Veja o Passo 5.</p>
+      </details>
+      <details>
+        <summary>Por que numa rede pede mais captcha do que em outra?</summary>
+        <p>Alguns sites do governo ficam mais “desconfiados” em redes com proxy ou bloqueios (comum em rede corporativa). Aí eles pedem o captcha com mais frequência. Em casa/numa rede comum, costuma pedir menos. Em todos os casos é só resolver na janela que o programa abriu.</p>
+      </details>
+      <details>
+        <summary>Preciso digitar CNPJ com pontos e barra?</summary>
+        <p>Não precisa. Pode digitar só os números (ou com pontos, barra e traço — tanto faz). O programa entende dos dois jeitos, inclusive os CNPJs novos com letras.</p>
+      </details>
+      <details>
+        <summary>Uma certidão deu “Erro”. Perdi as outras?</summary>
+        <p>Não. Cada certidão é independente — as que deram certo ficam baixadas normalmente. Você pode tentar de novo só a que falhou.</p>
+      </details>
+    </div>
+  </div>
+
+  <div class="section">
+    <a class="dl" href="https://github.com/cainaogg/puxador-de-certidoes/releases/latest">
+      <span class="dlic"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
+      <span class="dltxt"><b>Baixar a versão mais recente</b><small>Puxador de Certidoes.exe · Windows · portátil, não precisa instalar</small></span>
+      <span class="dlarrow">→</span>
+    </a>
+    <p class="dlnote">Abre a página de <i>releases</i> no GitHub. Você precisa ter acesso ao repositório para baixar.</p>
+  </div>
+
+  <p class="foot">Puxador de Certidões — guia de uso. Em caso de dúvida, procure o responsável que te enviou o programa.</p>
+
+</div>
+</div>
+
+</html>

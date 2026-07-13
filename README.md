@@ -19,6 +19,15 @@ Não precisa instalar nada nem programar: baixe o `.exe` mais recente na página
 > Na primeira abertura ele leva alguns segundos para carregar (o executável se
 > descompacta a cada início) — isso é normal.
 
+## Manual / Tutorial
+
+Um guia ilustrado passo a passo (pensado para quem não é técnico) está em
+[`docs/index.html`](docs/index.html). Ele mostra a tela do programa, como digitar
+os documentos, o que são as certidões manuais (captcha) e onde ficam os arquivos.
+
+Para publicá-lo como página (GitHub Pages): Settings → Pages → Source **main** /
+pasta **/docs**. A página fica em `https://<usuario>.github.io/<repo>/`.
+
 ## Preparação (uma vez)
 
 Requer **Python 3.14+** no Windows. Depois de clonar, entre na pasta
