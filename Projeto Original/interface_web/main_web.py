@@ -145,6 +145,25 @@ def listar_certidoes():
 
 
 @eel.expose
+def resumo_vencimentos(dias=15):
+    """Certidões vencidas ou a vencer em `dias` na pasta padrão do programa — para
+    o aviso proativo do Painel. Sempre olha PASTA_BASE (não pede pasta ao usuário,
+    diferente do "Verificador" manual do menu, que continua livre para qualquer
+    pasta)."""
+    if not PASTA_BASE.exists():
+        return []
+    out = []
+    for pdf, d, restam in verificar_vencimentos(PASTA_BASE, dias=dias):
+        try:
+            empresa = pdf.relative_to(PASTA_BASE).parts[0]
+        except Exception:  # noqa: BLE001
+            empresa = pdf.parent.name
+        out.append({"empresa": empresa, "arquivo": pdf.name,
+                    "data": d.strftime("%d/%m/%Y"), "restam": restam})
+    return out
+
+
+@eel.expose
 def abrir_site(mid):
     url = getattr(por_id(mid), "url", "")
     if url:

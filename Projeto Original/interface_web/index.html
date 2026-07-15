@@ -42,6 +42,21 @@
   h1{font-family:'Manrope',sans-serif;font-weight:800;font-size:22px}
   .sub{color:var(--subtext);font-size:14px;margin-top:2px;margin-bottom:20px}
   .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:22px}
+  .venc-banner{display:none;align-items:center;gap:12px;border-radius:12px;padding:12px 16px;
+    margin-bottom:18px;cursor:pointer;border:1px solid transparent}
+  .venc-banner.mostra{display:flex}
+  .venc-banner.sev-erro{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.35);color:var(--erro)}
+  .venc-banner.sev-manual{background:rgba(200,149,46,.14);border-color:rgba(200,149,46,.4);color:var(--manual)}
+  .venc-banner .vic{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.12);flex:none}
+  .venc-banner .vic svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2}
+  .venc-banner .vtxt{flex:1;font-size:13.5px;font-weight:600;color:var(--text)}
+  .venc-banner .varrow{font-size:13px;font-weight:700;white-space:nowrap}
+  .venc-list{max-height:340px;overflow-y:auto;margin-top:4px}
+  .venc-row{display:flex;align-items:center;gap:10px;padding:8px 4px;border-top:1px solid var(--border)}
+  .venc-row:first-child{border-top:0}
+  .venc-row .vemp{flex:1;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .venc-row .vdata{font-size:12px;color:var(--subtext);white-space:nowrap}
+  .venc-tag{font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;white-space:nowrap;flex:none}
   .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px}
   .stat{display:flex;align-items:center;gap:12px}
   .stat .ic{width:42px;height:42px;border-radius:11px;
@@ -197,6 +212,11 @@
     <div class="content">
       <h1>Puxador de Certidões</h1>
       <div class="sub">Baixe todas as certidões de um CNPJ ou CPF de uma vez</div>
+      <div class="venc-banner" id="venc-banner" onclick="abrirVencimentos()">
+        <span class="vic"><svg viewBox="0 0 24 24"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg></span>
+        <span class="vtxt" id="venc-txt"></span>
+        <span class="varrow">ver detalhes →</span>
+      </div>
       <div class="cards">
         <div class="card stat"><div class="ic"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg></div><div><div class="num" id="s-disp">0</div><div class="lbl">Certidões disponíveis</div></div></div>
         <div class="card stat"><div class="ic"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><div><div class="num" id="s-sel">0</div><div class="lbl">Selecionadas</div></div></div>
@@ -265,6 +285,41 @@
     atualizaIndPerfil();
     document.getElementById('s-disp').textContent = CERTS.filter(c=>c.impl).length;
     setInterval(poll, 150);   // consulta a fila de updates do Python
+    checarVencimentos();
+  }
+  let VENCIMENTOS = [];
+  async function checarVencimentos(){
+    try{ VENCIMENTOS = await eel.resumo_vencimentos(15)(); }catch(e){ return; }
+    const banner=document.getElementById('venc-banner');
+    if(!VENCIMENTOS || !VENCIMENTOS.length){ banner.classList.remove('mostra'); return; }
+    const vencidas=VENCIMENTOS.filter(v=>v.restam<0).length;
+    const urgentes=VENCIMENTOS.filter(v=>v.restam>=0 && v.restam<=7).length;
+    const partes=[];
+    if(vencidas) partes.push(`${vencidas} vencida${vencidas>1?'s':''}`);
+    if(urgentes) partes.push(`${urgentes} vencendo em até 7 dias`);
+    if(!partes.length) partes.push(`${VENCIMENTOS.length} vencendo nos próximos 15 dias`);
+    document.getElementById('venc-txt').textContent =
+      `⚠ ${partes.join(' · ')} — clique para ver quais`;
+    banner.classList.toggle('sev-erro', vencidas>0);
+    banner.classList.toggle('sev-manual', vencidas===0);
+    banner.classList.add('mostra');
+  }
+  function abrirVencimentos(){
+    const linhas = VENCIMENTOS.map(v=>{
+      let marca, cor;
+      if(v.restam<0){ marca='VENCIDA'; cor='var(--erro)'; }
+      else if(v.restam<=7){ marca=`faltam ${v.restam}d`; cor='var(--manual)'; }
+      else { marca=`faltam ${v.restam}d`; cor='var(--ok)'; }
+      return `<div class="venc-row">
+        <span class="venc-tag" style="background:${cor}22;color:${cor}">${marca}</span>
+        <span class="vemp" title="${esc(v.empresa)} — ${esc(v.arquivo)}">${esc(v.empresa)} — ${esc(v.arquivo)}</span>
+        <span class="vdata">${v.data}</span>
+      </div>`;
+    }).join('');
+    abrirModal(`<h3>Certidões vencidas ou a vencer<button class="x" onclick="fecharModal()">✕</button></h3>
+      <p style="margin-bottom:2px">Baseado na pasta de downloads do programa. Para atualizar uma, rode a busca de novo para o mesmo documento.</p>
+      <div class="venc-list">${linhas || '<p>Nada a vencer nos próximos 15 dias.</p>'}</div>
+      <button class="btn btn-primary" style="margin-top:16px" onclick="fecharModal()">Fechar</button>`);
   }
   async function poll(){
     let ups;
