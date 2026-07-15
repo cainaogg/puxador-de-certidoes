@@ -32,7 +32,9 @@ CERTIDOES = {
         "e Portal da Transparência (CEIS/CNEP). Só para CNPJ; sai do site do TCU.",
     "sefaz_rs":
         "CND Estadual do RS (SEFAZ-RS): certidão de situação fiscal junto ao estado do Rio "
-        "Grande do Sul. Sai do site da SEFAZ (resolve o ALTCHA sozinho).",
+        "Grande do Sul — de CNPJ ou CPF. Sai do site da SEFAZ (resolve o ALTCHA sozinho). "
+        "Se a certidão der positiva (há débito), o site exige login do titular — nesse "
+        "caso o programa avisa e não dá para automatizar.",
     "cndt_trabalhista":
         "CND Trabalhista (CNDT/TST): certidão de débitos trabalhistas — de CNPJ ou CPF. "
         "O captcha de texto em imagem é resolvido automaticamente (OCR offline, gratuito), "
@@ -40,18 +42,20 @@ CERTIDOES = {
         "o captcha na janela).",
     "fgts_crf":
         "Certificado de Regularidade do FGTS (CRF), emitido pela CAIXA. Mostra se a empresa "
-        "está regular com o FGTS. Sai do site da CAIXA.",
+        "(ou, no caso de CPF, o empregador doméstico) está regular com o FGTS. Sai do site "
+        "da CAIXA.",
     "tjrs_falencia":
         "Certidão Judicial Cível Negativa de Falência (1º grau, TJRS). O programa preenche "
         "e emite sozinho: consulta a razão social e o endereço do CNPJ numa base pública "
         "gratuita (BrasilAPI) e preenche o formulário do TJRS (que não tem captcha). Só "
         "para CNPJ. Se a consulta pública falhar, abre o site para você preencher à mão.",
     "poa_tributos":
-        "CND Municipal de Porto Alegre (débitos tributários). Sai do site da prefeitura "
-        "(SIAT); o captcha é resolvido automaticamente.",
+        "CND Municipal de Porto Alegre (débitos tributários) — de CNPJ ou CPF. Sai do "
+        "site da prefeitura (SIAT); o captcha é resolvido automaticamente.",
     "poa_iss":
-        "Comprovante de Inscrição no ISSQN de Porto Alegre. Documento cadastral (não tem "
-        "data de validade). Sai do site da prefeitura.",
+        "Comprovante de Inscrição no ISSQN de Porto Alegre — de CNPJ ou CPF (autônomo "
+        "registrado). Documento cadastral (não tem data de validade). Sai do site da "
+        "prefeitura.",
     "consulta_cnpj":
         "Consulta CNPJ (gov.br): abre o site oficial (cnpjreva) no seu navegador para você "
         "resolver o captcha e baixar o cartão CNPJ — é a fonte oficial e bloqueia automação. "

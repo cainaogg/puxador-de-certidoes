@@ -3,6 +3,11 @@
 Usa ALTCHA (prova-de-trabalho que resolve sozinho ao marcar "Eu não sou um robô").
 Fluxo: preenche CPF/CNPJ, marca o ALTCHA, espera resolver, clica Enviar e captura
 o PDF gerado. Mapeado em 2026-06-20.
+
+CPF testado com documento real em 2026-07: quando a certidão é NEGATIVA, o fluxo
+é igual ao CNPJ. Quando é POSITIVA (há débito), o site exige login do titular
+(gov.br) e mostra uma tela de aviso em vez do PDF — detectado via MSG_EXIGE_LOGIN
+e reportado como erro claro (não confundir com sucesso).
 """
 
 from __future__ import annotations
@@ -13,6 +18,10 @@ from ..documento import TipoDoc
 # Texto que indica que a certidão não pôde ser emitida (ex.: pendências).
 MSGS_ERRO = ["não foi possível", "pendência", "irregular", "débito"]
 
+# Quando a certidão dá "positiva" (há débito), o site exige login extra do titular
+# e mostra esta tela de aviso em vez do PDF — não é a certidão.
+MSG_EXIGE_LOGIN = "disponíveis apenas para o sujeito da certidão"
+
 
 class SefazRS(ModuloCertidao):
     id = "sefaz_rs"
@@ -21,7 +30,7 @@ class SefazRS(ModuloCertidao):
     url = "https://www.sefaz.rs.gov.br/sat/CertidaoSitFiscalSolic.aspx"
     requer_captcha = False
     implementado = True
-    aceita = frozenset({TipoDoc.CNPJ})
+    aceita = frozenset({TipoDoc.CNPJ, TipoDoc.CPF})
 
     def executar(self, page, ctx: Contexto) -> Resultado:
         ctx.log("SEFAZ-RS: abrindo o site…")
@@ -66,11 +75,23 @@ class SefazRS(ModuloCertidao):
             ctx.log(f"SEFAZ-RS: salvo em {caminho.name}")
             return Resultado(self.id, Status.OK, "Certidão salva.", caminho)
 
-        # Sem download: pode ter aberto numa nova aba, ou exibido erro.
+        # Sem download: pode ter aberto numa nova aba, ou exibido erro. O site às
+        # vezes mantém abas extras (ex.: about:blank) — a aba de resultado real é a
+        # "_result.aspx"; pegar cegamente a última aba pode capturar a errada.
         paginas = page.context.pages
-        if len(paginas) > 1:
+        destino = next((p for p in paginas if "_result" in p.url.lower()), None)
+        if destino is None and len(paginas) > 1:
             destino = paginas[-1]
+        if destino is not None:
             destino.wait_for_load_state("networkidle", timeout=20_000)
+            corpo_destino = destino.inner_text("body")
+            if MSG_EXIGE_LOGIN in corpo_destino:
+                return Resultado(
+                    self.id, Status.ERRO,
+                    "SEFAZ-RS: a certidão deu positiva (há débito) e o site exige login "
+                    "do próprio titular para emiti-la — não dá para automatizar. Acesse "
+                    "o site e faça login com o gov.br do titular.",
+                )
             salvar_pagina_como_pdf(destino, caminho)
             return Resultado(self.id, Status.OK, "Certidão salva (nova aba).", caminho)
 

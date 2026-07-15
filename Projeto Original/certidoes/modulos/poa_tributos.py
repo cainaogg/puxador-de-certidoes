@@ -48,7 +48,7 @@ class POATributos(ModuloCertidao):
            "ArrSolicitarCertidaoGeralDebTributarios_Internet.do")
     requer_captcha = False  # a NopeCHA resolve sozinha
     implementado = True
-    aceita = frozenset({TipoDoc.CNPJ})
+    aceita = frozenset({TipoDoc.CNPJ, TipoDoc.CPF})
 
     def executar(self, page, ctx: Contexto) -> Resultado:
         eh_cnpj = ctx.documento.tipo is TipoDoc.CNPJ

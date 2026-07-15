@@ -43,7 +43,7 @@ class POAISS(ModuloCertidao):
            "CpsEmitirComprovanteInscricao_Internet.do")
     requer_captcha = False  # a NopeCHA resolve sozinha
     implementado = True
-    aceita = frozenset({TipoDoc.CNPJ})
+    aceita = frozenset({TipoDoc.CNPJ, TipoDoc.CPF})
 
     def executar(self, page, ctx: Contexto) -> Resultado:
         eh_cnpj = ctx.documento.tipo is TipoDoc.CNPJ
@@ -83,7 +83,19 @@ class POAISS(ModuloCertidao):
         ctx.log("POA ISS: emitindo…")
         def _confirmar() -> None:
             page.locator("div.gwt-CustomButton:visible").first.click(timeout=10_000)
-        return emitir_e_capturar(page, ctx, self.id, "POA ISS", _confirmar)
+        res = emitir_e_capturar(page, ctx, self.id, "POA ISS", _confirmar)
+        if res.status is not Status.OK:
+            try:
+                corpo = page.inner_text("body")
+            except Exception:  # noqa: BLE001
+                corpo = ""
+            if "não foi localizado cadastro" in corpo.lower():
+                return Resultado(
+                    self.id, Status.ERRO,
+                    "Não há inscrição de ISSQN cadastrada para este documento (não é "
+                    "aplicável a quem não presta serviço autônomo registrado).",
+                )
+        return res
 
     def _preencher(self, page, ctx: Contexto, eh_cnpj: bool) -> bool:
         """Escolhe o tipo no <select> e digita o documento. True se conseguiu."""

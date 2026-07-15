@@ -24,7 +24,7 @@ class FGTS(ModuloCertidao):
     url = "https://consulta-crf.caixa.gov.br/consultacrf/pages/consultaEmpregador.jsf"
     requer_captcha = False
     implementado = True
-    aceita = frozenset({TipoDoc.CNPJ})
+    aceita = frozenset({TipoDoc.CNPJ, TipoDoc.CPF})
 
     # IDs reais do formulário JSF da Caixa (mapeados em 2026-06-19).
     SEL_TIPO = '[id="mainForm:tipoEstabelecimento"]'   # <select> CNPJ/CPF
@@ -35,6 +35,10 @@ class FGTS(ModuloCertidao):
     SEL_VOLTAR_FINAL = '[id="mainForm:btVoltar3"]'
 
     def executar(self, page, ctx: Contexto) -> Resultado:
+        # CPF: só tem certificado quem é "empregador doméstico" registrado na Caixa.
+        # Testado com CPF real em 2026-07: o site aceita, navega e responde
+        # normalmente ("não encontrado" para quem não tem cadastro) — o formulário
+        # não rejeita CPF. Os passos de Visualizar/Imprimir são iguais ao fluxo CNPJ.
         ctx.log("FGTS: abrindo o site da Caixa…")
         page.goto(self.url, wait_until="domcontentloaded", timeout=60_000)
 
