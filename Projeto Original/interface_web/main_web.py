@@ -101,10 +101,14 @@ def salvar_tema(tema):
 
 @eel.expose
 def listar_certidoes():
-    return [{"id": m.id, "label": m.nome,
+    def tags(m):
+        vals = {t.value.upper() for t in getattr(m, "aceita", frozenset())}
+        return [t for t in ("CNPJ", "CPF") if t in vals]  # CNPJ primeiro
+    return [{"id": m.id, "label": ajuda.LABELS.get(m.id, m.nome),
              "desc": ajuda.CERTIDOES.get(m.id, m.descricao or ""),
              "site": bool(getattr(m, "url", "")),
-             "impl": bool(m.implementado)} for m in REGISTRY]
+             "impl": bool(m.implementado),
+             "tags": tags(m)} for m in REGISTRY]
 
 
 @eel.expose
@@ -114,6 +118,12 @@ def abrir_site(mid):
         webbrowser.open(url)
     else:
         _emit({"t": "log", "m": "Esta certidão não tem site próprio para abrir."})
+
+
+@eel.expose
+def abrir_link(url):
+    if url:
+        webbrowser.open(url)
 
 
 @eel.expose

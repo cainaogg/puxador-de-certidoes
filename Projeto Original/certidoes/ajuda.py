@@ -57,6 +57,23 @@ CERTIDOES = {
         "O nome da empresa usado nas pastas vem, à parte, de uma consulta gratuita automática.",
 }
 
+# Nome curto exibido na LISTA (o órgão e os detalhes ficam no "?"/CERTIDOES).
+LABELS = {
+    "consulta_cnpj": "Cartão CNPJ",
+    "poa_tributos": "CND Municipal (Porto Alegre)",
+    "sefaz_rs": "CND Estadual (RS)",
+    "receita_federal": "CND Federal",
+    "cndt_trabalhista": "CND Trabalhista",
+    "fgts_crf": "Certificado FGTS",
+    "tjrs_falencia": "Certidão de Falência",
+    "cnj_improbidade": "Improbidade e Inelegibilidade",
+    "tcu_inidoneos": "Licitantes Inidôneos",
+    "tcu_contas_irregulares": "Contas Julgadas Irregulares",
+    "cgu_correcional": "Consulta CEIS",
+    "tcu_consolidada_pj": "Consulta Consolidada",
+    "poa_iss": "Comprovante ISSQN",
+}
+
 # Explicação geral do programa (Original).
 PROGRAMA = (
     "PUXADOR DE CERTIDÕES\n\n"

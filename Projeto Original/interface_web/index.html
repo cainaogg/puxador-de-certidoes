@@ -65,6 +65,19 @@
   /* ---------- lista de certidões ---------- */
   .cert-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
   .todas{display:flex;align-items:center;gap:7px;color:var(--subtext);font-size:12.5px;cursor:pointer}
+  .tagfilter{display:flex;align-items:center;gap:6px}
+  .tf-lbl{color:var(--subtext);font-size:12px;margin-right:2px}
+  .tchip{font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;cursor:pointer;
+         border:1px solid var(--border);background:transparent;color:var(--subtext);transition:.12s}
+  .tchip:hover{border-color:var(--text);color:var(--text)}
+  .tchip[data-tag="CNPJ"].on{background:rgba(99,140,255,.20);border-color:#6f8cff;color:#bcccff;box-shadow:0 0 0 1px rgba(99,140,255,.30)}
+  .tchip[data-tag="CPF"].on{background:rgba(167,139,250,.22);border-color:#a78bfa;color:#d8c8ff;box-shadow:0 0 0 1px rgba(167,139,250,.30)}
+  .linha .tags{display:flex;gap:4px;flex:none}
+  .tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;transition:.12s}
+  .tag.t-CNPJ{color:#93a9dd;background:rgba(99,140,255,.14)}
+  .tag.t-CPF{color:#bda9e8;background:rgba(167,139,250,.16)}
+  #lista.on-CNPJ .tag.t-CNPJ{color:#0a1330;background:#7d9bff}
+  #lista.on-CPF .tag.t-CPF{color:#160a2e;background:#bfa4f8}
   .lista{max-height:340px;overflow-y:auto;padding-right:4px}
   .linha{display:flex;align-items:center;gap:10px;padding:8px 6px;border-radius:9px}
   .linha:hover{background:var(--panelAlt)}
@@ -109,6 +122,29 @@
   .swatches{display:flex;gap:12px}
   .swatch{width:34px;height:34px;border-radius:999px;border:none;cursor:pointer;padding:0}
   .swatch.on{outline:2px solid var(--text);outline-offset:2px}
+  /* Configurações com abas laterais */
+  .modal.wide{width:min(800px,95vw);max-height:90vh;padding:0;overflow:hidden}
+  .cfg{display:flex;height:600px}
+  .cfg-side{width:196px;flex:none;background:var(--panelAlt);border-right:1px solid var(--border);padding:16px 12px;display:flex;flex-direction:column;gap:4px}
+  .cfg-side .tit{font-family:'Manrope',sans-serif;font-weight:800;font-size:16px;padding:2px 8px 12px}
+  .cfg-tab{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:9px;cursor:pointer;color:var(--subtext);font-size:13px;font-weight:600}
+  .cfg-tab:hover{background:var(--panel);color:var(--text)}
+  .cfg-tab.on{background:var(--accent);color:#fff}
+  .cfg-tab svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;flex:none}
+  .cfg-main{flex:1;padding:22px 24px;display:flex;flex-direction:column;min-width:0;overflow-y:auto}
+  .cfg-main .x{position:absolute;top:16px;right:18px}
+  .cfg-pane{display:none;flex:1}
+  .cfg-pane.on{display:block}
+  .cfg-h{font-family:'Manrope',sans-serif;font-weight:800;font-size:17px;margin:0 0 4px;display:flex;align-items:center}
+  .cfg-sub{color:var(--subtext);font-size:13px;margin-bottom:16px;line-height:1.6}
+  .cfg-foot{margin-top:18px;padding-top:16px;border-top:1px solid var(--border)}
+  .wip{font-size:11px;font-weight:700;color:#e0b341;background:rgba(224,179,65,.14);border:1px solid rgba(224,179,65,.4);padding:2px 9px;border-radius:999px;margin-left:10px}
+  .apibox{background:var(--panelAlt);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:13px;line-height:1.65;color:var(--text)}
+  .apibox ol{margin:8px 0 0;padding-left:18px} .apibox li{margin:5px 0}
+  .apilink{display:inline-flex;align-items:center;gap:6px;margin-top:12px;color:var(--accent);font-weight:600;font-size:13px;cursor:pointer;text-decoration:none}
+  .apilink:hover{text-decoration:underline}
+  .apilink svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2}
+  .credito{color:#6ee39b;font-weight:700}
   .modal input[type=password]{width:100%;background:var(--inputBg);border:1px solid var(--border);
     border-radius:9px;color:var(--text);padding:10px;font-size:13px}
   /* scrollbar fina */
@@ -151,7 +187,11 @@
         <div class="card">
           <div class="cert-head">
             <h2>Certidões</h2>
-            <label class="todas"><input type="checkbox" id="todas" onchange="marcarTodas()"> Marcar todas</label>
+            <div class="tagfilter">
+              <span class="tf-lbl">Marcar:</span>
+              <button class="tchip" data-tag="CNPJ" onclick="toggleTag('CNPJ')" title="Pessoa Jurídica — marca/desmarca todas as de CNPJ">CNPJ</button>
+              <button class="tchip" data-tag="CPF" onclick="toggleTag('CPF')" title="Pessoa Física — marca/desmarca as que também saem para CPF">CPF</button>
+            </div>
           </div>
           <div class="lista" id="lista"></div>
         </div>
@@ -207,22 +247,40 @@
       const row=document.createElement('div'); row.className='linha';
       row.innerHTML = `<input type="checkbox" data-id="${c.id}" onchange="atualizaSel()" ${c.impl?'':'disabled'}>
         <span class="nome" title="${c.label}">${c.label}${c.impl?'':' (em breve)'}</span>
+        <span class="tags">${(c.tags||[]).map(t=>`<span class="tag t-${t}" title="${t==='CPF'?'Pessoa Física':'Pessoa Jurídica'}">${t}</span>`).join('')}</span>
         <span class="pill" id="pill-${c.id}" style="${pill('pendente')}">${pillTxt('pendente')}</span>
         ${c.site?`<button class="site" title="Abrir o site desta certidão" onclick="eel.abrir_site('${c.id}')()"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></button>`:''}
         <button class="ajuda">?<span class="tip">${(c.desc||'').replace(/</g,'&lt;')}</span></button>`;
       el.appendChild(row);
     });
   }
+  let TAG_ON = {CNPJ:false, CPF:false};   // estado de cada chip (independente)
   function checks(){return [...document.querySelectorAll('#lista input[type=checkbox]')]}
-  function atualizaSel(){
-    const sel=checks().filter(x=>x.checked).length;
-    document.getElementById('s-sel').textContent=sel;
-    const marc=checks().filter(x=>!x.disabled);
-    document.getElementById('todas').checked = marc.length>0 && marc.every(x=>x.checked);
+  function certDe(x){ return CERTS.find(c=>c.id===x.dataset.id) || {}; }
+  function toggleTag(tag){ TAG_ON[tag] = !TAG_ON[tag]; aplicaTags(); }
+  function aplicaTags(){
+    // marcado = coberto por ALGUM chip ativo (união). Assim CNPJ e CPF não brigam:
+    // desligar um não desmarca o que o outro ainda cobre.
+    checks().forEach(x=>{ if(x.disabled) return;
+      const tags = certDe(x).tags || [];
+      x.checked = tags.some(t => TAG_ON[t]);
+    });
+    atualizaSel();
   }
-  function marcarTodas(){
-    const v=document.getElementById('todas').checked;
-    checks().forEach(x=>{if(!x.disabled)x.checked=v}); atualizaSel();
+  function atualizaSel(){
+    // conta por TIPO ATIVO: cada doc soma 1 por chip ligado que o cobre.
+    // só CNPJ -> 13; só CPF -> 5; ambos -> 18. (seleção manual conta 1)
+    const total = checks().filter(x=>x.checked).reduce((s,x)=>{
+      const ativos = (certDe(x).tags||[]).filter(t=>TAG_ON[t]).length;
+      return s + Math.max(1, ativos);
+    }, 0);
+    document.getElementById('s-sel').textContent = total;
+    const lista=document.getElementById('lista');
+    ['CNPJ','CPF'].forEach(tag=>{
+      const chip=document.querySelector(`.tchip[data-tag="${tag}"]`);
+      if(chip) chip.classList.toggle('on', TAG_ON[tag]);
+      lista.classList.toggle('on-'+tag, TAG_ON[tag]);
+    });
   }
   function toggleDrawer(){
     const d=document.getElementById('drawer'); d.classList.toggle('aberta');
@@ -243,7 +301,7 @@
   // ---- modais (Ajuda / Configurações) ----
   function esc(s){ return (s||'').replace(/[<>&]/g, c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c])); }
   function fecharModal(){ document.getElementById('overlay').classList.remove('aberto'); }
-  function abrirModal(html){ document.getElementById('modal').innerHTML=html; document.getElementById('overlay').classList.add('aberto'); }
+  function abrirModal(html, wide){ const m=document.getElementById('modal'); m.classList.toggle('wide', !!wide); m.innerHTML=html; document.getElementById('overlay').classList.add('aberto'); }
   async function abrirAjuda(){
     const t = await eel.texto_ajuda()();
     abrirModal(`<h3>Como funciona o programa<button class="x" onclick="fecharModal()">✕</button></h3>
@@ -251,23 +309,81 @@
       <button class="btn btn-primary" style="margin-top:16px" onclick="fecharModal()">Fechar</button>`);
   }
   let _modo='navegador';
+  const IC_DOC='<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>';
+  const IC_API='<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="6" rx="1"/><rect x="3" y="14" width="18" height="6" rx="1"/><path d="M7 7h.01M7 17h.01"/></svg>';
+  const IC_COR='<svg viewBox="0 0 24 24"><path d="M12 2s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg>';
+  const IC_PERFIL='<svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>';
   async function abrirConfig(){
     const c = await eel.carregar_config()(); _modo=c.modo;
-    abrirModal(`<h3>Configurações<button class="x" onclick="fecharModal()">✕</button></h3>
-      <div class="campo"><label>Certidão da Receita Federal — como emitir</label>
-        <div class="seg">
-          <button id="m-nav" class="${c.modo==='navegador'?'on':''}" onclick="setModo('navegador')">Abrir no meu navegador</button>
-          <button id="m-api" class="${c.modo==='api'?'on':''}" onclick="setModo('api')">Baixar pela API (Infosimples)</button>
-        </div></div>
-      <div class="campo"><label>Token da API Infosimples (para o modo API)</label>
-        <input type="password" id="cfg-token" value="${esc(c.token)}" placeholder="cole seu token aqui"></div>
-      <div class="campo"><label>Cor de destaque</label>
-        <div class="swatches">${ACCENTS.map(cor=>`<button class="swatch ${cor===c.accent?'on':''}" data-cor="${cor}" style="background:${cor}" onclick="setAccent('${cor}')"></button>`).join('')}</div></div>
-      <button class="btn btn-primary" onclick="salvarConfig()">Salvar</button>`);
+    abrirModal(`<div class="cfg">
+      <div class="cfg-side">
+        <div class="tit">Configurações</div>
+        <div class="cfg-tab on" data-tab="perfis" onclick="cfgTab('perfis')">${IC_PERFIL} Perfis</div>
+        <div class="cfg-tab" data-tab="receita" onclick="cfgTab('receita')">${IC_DOC} Preferência de Download</div>
+        <div class="cfg-tab" data-tab="api" onclick="cfgTab('api')">${IC_API} API Infosimples</div>
+        <div class="cfg-tab" data-tab="aparencia" onclick="cfgTab('aparencia')">${IC_COR} Aparência</div>
+      </div>
+      <div class="cfg-main">
+        <button class="x" onclick="fecharModal()">✕</button>
+        <div class="cfg-pane on" data-pane="perfis">
+          <div class="cfg-h">Perfis de download <span class="wip">🚧 Em construção</span></div>
+          <div class="cfg-sub">Um perfil define quais certidões são marcadas ao clicar em CNPJ ou CPF.</div>
+          <div class="apibox">
+            <b>Perfil: Padrão</b>
+            <div style="margin-top:6px">Já vem com <b>todas as 13 de CNPJ</b> e as <b>5 que também fazem CPF</b> (18 no total). Em breve você poderá <b>criar perfis próprios</b> — ex.: só os 3 documentos que usa num contrato — e escolher exatamente o que cada tag (CNPJ/CPF) marca.</div>
+          </div>
+        </div>
+        <div class="cfg-pane" data-pane="receita">
+          <div class="cfg-h">Preferência de Download <span class="wip">🚧 Em construção</span></div>
+          <div class="cfg-sub">Como o programa baixa a Receita Federal (CND Federal e Cartão CNPJ). Vamos melhorar esta seção em breve.</div>
+          <div class="campo"><label>Como emitir a Receita Federal</label>
+            <div class="seg">
+              <button id="m-nav" class="${c.modo==='navegador'?'on':''}" onclick="setModo('navegador')">Abrir no meu navegador</button>
+              <button id="m-api" class="${c.modo==='api'?'on':''}" onclick="setModo('api')">Baixar pela API</button>
+            </div></div>
+          <div class="cfg-sub"><b>Abrir no navegador</b> (padrão): a Receita bloqueia automação, então o programa abre o site e você resolve o captcha. <b>Baixar pela API</b>: usa a Infosimples (pago) — configure o token na aba <b>API Infosimples</b>.</div>
+        </div>
+        <div class="cfg-pane" data-pane="api">
+          <div class="cfg-h">API Infosimples <span class="wip">🚧 Em construção</span></div>
+          <div class="cfg-sub">Baixa a Receita automaticamente, sem você resolver captcha. Opcional e pago.</div>
+          <div class="apibox">
+            <b>O que faz:</b> serviço pago que consulta e baixa certidões pela internet (útil para a Receita Federal, que normalmente exige emissão manual). Cobra por consulta (cerca de R$ 0,26) — e <span class="credito">dão R$ 100,00 de crédito ao criar a conta</span>.
+            <div style="margin-top:8px"><b>Como usar:</b></div>
+            <ol>
+              <li>Crie uma conta no site <b>infosimples.com</b> (ganha R$ 100 de crédito).</li>
+              <li>Gere um <b>token</b> de acesso na sua conta.</li>
+              <li>Cole o token abaixo e, na aba <b>Preferência de Download</b>, escolha <b>Baixar pela API</b>.</li>
+            </ol>
+            <a class="apilink" onclick="eel.abrir_link('https://infosimples.com')()">Saiba mais no site da Infosimples <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>
+            <div style="margin-top:10px;color:var(--subtext)">Esta versão gratuita ainda está finalizando o suporte à API — por ora, use "Abrir no navegador".</div>
+          </div>
+          <div class="campo" style="margin-top:16px"><label>Token da API Infosimples</label>
+            <input type="password" id="cfg-token" value="${esc(c.token)}" placeholder="cole seu token aqui"></div>
+        </div>
+        <div class="cfg-pane" data-pane="aparencia">
+          <div class="cfg-h">Aparência</div>
+          <div class="cfg-sub">Deixe o programa do jeito que você enxerga melhor.</div>
+          <div class="campo"><label>Tema</label>
+            <div class="seg">
+              <button id="t-claro" class="${_tema==='light'?'on':''}" onclick="setTema('light')">Claro</button>
+              <button id="t-escuro" class="${_tema!=='light'?'on':''}" onclick="setTema('dark')">Escuro</button>
+            </div></div>
+          <div class="campo"><label>Cor de destaque</label>
+            <div class="swatches">${ACCENTS.map(cor=>`<button class="swatch ${cor===c.accent?'on':''}" data-cor="${cor}" style="background:${cor}" onclick="setAccent('${cor}')"></button>`).join('')}</div></div>
+        </div>
+        <div class="cfg-foot"><button class="btn btn-primary" onclick="salvarConfig()">Salvar</button></div>
+      </div></div>`, true);
+  }
+  function cfgTab(name){
+    document.querySelectorAll('.cfg-tab').forEach(t=>t.classList.toggle('on', t.dataset.tab===name));
+    document.querySelectorAll('.cfg-pane').forEach(p=>p.classList.toggle('on', p.dataset.pane===name));
   }
   function setModo(m){ _modo=m;
     document.getElementById('m-nav').classList.toggle('on', m==='navegador');
     document.getElementById('m-api').classList.toggle('on', m==='api'); }
+  function setTema(t){ aplicaTema(t); eel.salvar_tema(t)();
+    const cl=document.getElementById('t-claro'), es=document.getElementById('t-escuro');
+    if(cl) cl.classList.toggle('on', t==='light'); if(es) es.classList.toggle('on', t!=='light'); }
   function salvarConfig(){ eel.salvar_config(_modo, document.getElementById('cfg-token').value)(); fecharModal(); }
   const ACCENTS=['#3B82F6','#8B5CF6','#16A34A','#C8952E','#E8763C','#E5484D'];
   function setAccent(cor){

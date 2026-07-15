@@ -10,6 +10,7 @@ reserva) — sem captcha, sem login e sem custo. Serve para:
 from __future__ import annotations
 
 import json
+import time
 import urllib.request
 from datetime import date
 from pathlib import Path
@@ -24,22 +25,28 @@ FONTES = [
 CNPJREVA_URL = "https://solucoes.receita.fazenda.gov.br/Servicos/cnpjreva/"
 
 
-def consultar(cnpj_digitos: str) -> Optional[dict]:
-    """Busca os dados do CNPJ numa API pública gratuita. None se nenhuma responder."""
+def consultar(cnpj_digitos: str, tentativas: int = 2) -> Optional[dict]:
+    """Busca os dados do CNPJ numa API pública gratuita. None se nenhuma responder.
+
+    Tenta as fontes mais de uma vez: em rede lenta/proxy a 1ª chamada às vezes
+    falha e a 2ª funciona — evita cair no fallback manual (ex.: TJRS, CNJ) à toa."""
     cnpj = "".join(filter(str.isdigit, cnpj_digitos))
-    for url in FONTES:
-        try:
-            req = urllib.request.Request(
-                url.format(cnpj=cnpj), headers={"User-Agent": "Mozilla/5.0"}
-            )
-            # Timeout curto: a API responde em <1s quando está ok; não faz sentido
-            # segurar o programa 30s por uma fonte que travou (rede lenta/proxy).
-            with urllib.request.urlopen(req, timeout=12) as resp:
-                dados = json.loads(resp.read().decode("utf-8"))
-            if dados.get("razao_social") or dados.get("nome"):
-                return dados
-        except Exception:  # noqa: BLE001 - tenta a próxima fonte
-            continue
+    for tentativa in range(max(1, tentativas)):
+        for url in FONTES:
+            try:
+                req = urllib.request.Request(
+                    url.format(cnpj=cnpj), headers={"User-Agent": "Mozilla/5.0"}
+                )
+                # Timeout curto: a API responde em <1s quando está ok; não faz sentido
+                # segurar o programa por uma fonte que travou (rede lenta/proxy).
+                with urllib.request.urlopen(req, timeout=10) as resp:
+                    dados = json.loads(resp.read().decode("utf-8"))
+                if dados.get("razao_social") or dados.get("nome"):
+                    return dados
+            except Exception:  # noqa: BLE001 - tenta a próxima fonte
+                continue
+        if tentativa + 1 < tentativas:
+            time.sleep(1.0)  # pequena pausa antes de tentar tudo de novo
     return None
 
 
