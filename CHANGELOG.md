@@ -3,6 +3,45 @@
 Este arquivo resume o que mudou em cada versão do **Puxador de Certidões**
 (apenas a versão original em Python).
 
+## [2.2.0] — 2026-07-15
+
+### Perfis de download
+- **Editor de perfis (Configurações › Perfis).** Um perfil define quais certidões
+  os chips **CNPJ** e **CPF** marcam de uma vez na lista. Dá para criar quantos
+  perfis quiser (ex.: "Inexigibilidade" com só 3 documentos), escolher o ativo e
+  trocar quando quiser. O perfil **Padrão** é fixo (todas as de CNPJ + todas as de
+  CPF) e serve de referência — não pode ser editado nem excluído.
+- **Indicador do perfil ativo** sempre visível ao lado de "Certidões", e um aviso
+  (toast) ao ativar, salvar ou excluir um perfil.
+
+### Lista de certidões reformulada
+- **Nomes mais curtos** na lista (o órgão foi para o "?" de cada uma) — ex.:
+  "CND Federal" em vez de "CND Federal CNPJ (RFB/PGFN)".
+- **Etiquetas CNPJ/CPF** em cada linha, mostrando para quem aquela certidão serve.
+- **Botões "Marcar: CNPJ / CPF"** no topo da lista substituem o antigo "Marcar
+  todas" — cada um liga/desliga de forma independente (dá para combinar os dois).
+
+### Certidões de CPF — de 5 para 10
+Testadas uma a uma com documento real, passaram a aceitar **CPF** além de CNPJ:
+**CND Trabalhista (CNDT/TST)**, **CND Municipal (Porto Alegre)**, **CND Estadual
+(SEFAZ-RS)**, **Certificado FGTS (Caixa)** e **Comprovante ISSQN (Porto Alegre)**.
+Somadas às 5 que já aceitavam CPF (CND Federal, Improbidade/CNJ, CEIS, e as duas
+do TCU), chegam a **10 das 13 certidões**. As 3 que ficam só para CNPJ (Cartão
+CNPJ, Certidão de Falência do TJRS e Consulta Consolidada do TCU) são assim por
+natureza do próprio serviço ou por falta de dado público equivalente para CPF.
+
+### Configurações redesenhadas
+- Janela com **abas laterais** (Perfis, Preferência de Download, API Infosimples,
+  Aparência) em vez de um formulário único.
+- Aba da **API Infosimples** explica o que ela faz, como criar a conta (com R$
+  100 de crédito) e como configurar — sinalizada como recurso em construção.
+
+### Correções
+- **SEFAZ-RS (CND Estadual):** corrigido um caso em que, ao consultar uma
+  certidão que dá **positiva** (há débito), o site exige login do titular e o
+  programa podia confundir a tela de aviso com a certidão em si. Agora reporta
+  um erro claro em vez de gerar um arquivo incorreto.
+
 ## [2.1.0] — 2026-07-13
 
 ### Nova interface

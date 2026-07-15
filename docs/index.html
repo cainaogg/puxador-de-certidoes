@@ -88,6 +88,11 @@
   .wrow .mini svg{width:13px; height:13px}
   .wpill{font-size:11.5px; font-weight:700; padding:2px 9px; border-radius:999px; background:var(--aPendBg); color:#9fb0c8; flex:none}
   .wfoot{margin-top:14px; padding-top:10px; border-top:1px solid var(--aBorder); font-size:12.5px; color:var(--aSub); display:flex; justify-content:space-between}
+  .wtags{display:flex; gap:4px; flex:none}
+  .wtag{font-size:10px; font-weight:700; padding:2px 7px; border-radius:999px}
+  .wtag.cnpj{color:#93a9dd; background:rgba(99,140,255,.14)}
+  .wtag.cpf{color:#bda9e8; background:rgba(167,139,250,.16)}
+  .wchip{font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px; border:1px solid var(--aBorder); color:var(--aSub)}
 
   /* ---- Download: link discreto no topo + botão suave no fim ---- */
   .hdr{display:flex; justify-content:space-between; align-items:flex-start; gap:20px; flex-wrap:wrap}
@@ -234,15 +239,15 @@
           <div class="wpanel">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
               <div class="pinrow"><span class="pin">3</span><span class="wlbl" style="font-size:13px">Certidões</span></div>
-              <div class="wsub">☐ Marcar todas</div>
+              <div style="display:flex;align-items:center;gap:6px"><span class="wsub">Marcar:</span><span class="wchip">CNPJ</span><span class="wchip">CPF</span></div>
             </div>
-            <div class="wrow"><span class="chk"></span><span class="nm">Consulta CNPJ (gov.br)</span><span class="mini"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg></span><span class="mini">?</span><span class="wpill">Pendente</span></div>
-            <div class="wrow"><span class="chk"></span><span class="nm">CND Municipal (POA)</span><span class="mini"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg></span><span class="mini">?</span><span class="wpill">Pendente</span></div>
-            <div class="wrow"><span class="chk"></span><span class="nm">CND Estadual (SEFAZ-RS)</span><span class="mini"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg></span><span class="mini">?</span><span class="wpill">Pendente</span></div>
-            <div class="wrow"><span class="chk"></span><span class="nm">CND Federal CNPJ (RFB/PGFN)</span><span class="mini"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg></span><span class="mini">?</span><span class="wpill">Pendente</span></div>
-            <div class="wrow"><span class="chk"></span><span class="nm">CND Trabalhista (CNDT)</span><span class="mini"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg></span><span class="mini">?</span><span class="wpill">Pendente</span></div>
-            <div class="wrow"><span class="chk"></span><span class="nm">Certificado FGTS (CRF)</span><span class="mini"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg></span><span class="mini">?</span><span class="wpill">Pendente</span></div>
-            <div class="wrow"><span class="chk"></span><span class="nm">Consulta CEIS CNPJ (CGU)</span><span class="mini"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg></span><span class="mini">?</span><span class="wpill">Pendente</span></div>
+            <div class="wrow"><span class="chk"></span><span class="nm">Cartão CNPJ</span><span class="wtags"><span class="wtag cnpj">CNPJ</span></span><span class="mini"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg></span><span class="mini">?</span><span class="wpill">Pendente</span></div>
+            <div class="wrow"><span class="chk"></span><span class="nm">CND Municipal (Porto Alegre)</span><span class="wtags"><span class="wtag cnpj">CNPJ</span><span class="wtag cpf">CPF</span></span><span class="mini"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg></span><span class="mini">?</span><span class="wpill">Pendente</span></div>
+            <div class="wrow"><span class="chk"></span><span class="nm">CND Estadual (RS)</span><span class="wtags"><span class="wtag cnpj">CNPJ</span><span class="wtag cpf">CPF</span></span><span class="mini"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg></span><span class="mini">?</span><span class="wpill">Pendente</span></div>
+            <div class="wrow"><span class="chk"></span><span class="nm">CND Federal</span><span class="wtags"><span class="wtag cnpj">CNPJ</span><span class="wtag cpf">CPF</span></span><span class="mini"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg></span><span class="mini">?</span><span class="wpill">Pendente</span></div>
+            <div class="wrow"><span class="chk"></span><span class="nm">CND Trabalhista</span><span class="wtags"><span class="wtag cnpj">CNPJ</span><span class="wtag cpf">CPF</span></span><span class="mini"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg></span><span class="mini">?</span><span class="wpill">Pendente</span></div>
+            <div class="wrow"><span class="chk"></span><span class="nm">Certificado FGTS</span><span class="wtags"><span class="wtag cnpj">CNPJ</span><span class="wtag cpf">CPF</span></span><span class="mini"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg></span><span class="mini">?</span><span class="wpill">Pendente</span></div>
+            <div class="wrow"><span class="chk"></span><span class="nm">Consulta CEIS</span><span class="wtags"><span class="wtag cnpj">CNPJ</span><span class="wtag cpf">CPF</span></span><span class="mini"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg></span><span class="mini">?</span><span class="wpill">Pendente</span></div>
           </div>
         </div>
         <div class="wfoot"><span>Registro de atividade</span><span>▸ mostrar</span></div>
@@ -289,7 +294,8 @@
       <div class="num">3</div>
       <div>
         <h3>Clique em “Buscar e baixar”</h3>
-        <p>Deixe marcadas as certidões que quer (ou use <b>“Marcar todas”</b>). Depois é só clicar no botão azul <b>Buscar e baixar</b>.</p>
+        <p>Deixe marcadas as certidões que quer, ou use os botões <b>“Marcar: CNPJ / CPF”</b> no topo da lista para marcar de uma vez todas as de um tipo (dá para ligar os dois ao mesmo tempo). Depois é só clicar no botão azul <b>Buscar e baixar</b>.</p>
+        <p class="tip">Cada certidão mostra uma etiqueta <b>CNPJ</b> e/ou <b>CPF</b> avisando para quem ela serve — muitas já aceitam os dois.</p>
         <p class="tip">Cada linha ainda tem dois botõezinhos: <b>↗</b> abre o site oficial daquela certidão, e <b>?</b> explica o que ela é.</p>
       </div>
     </div>
@@ -300,9 +306,9 @@
         <h3>Acompanhe pelas cores</h3>
         <p>O programa passa por cada certidão. O selo ao lado mostra a situação:</p>
         <div class="box">
-          <div class="lrow"><span>CND Trabalhista (CNDT)</span> <span class="badge b-ok">✓ Baixado</span></div>
-          <div class="lrow"><span>Certificado FGTS (CRF)</span> <span class="badge b-ok">✓ Baixado</span></div>
-          <div class="lrow"><span>CND Federal CNPJ (RFB/PGFN)</span> <span class="badge b-manual">⚠ Emitir manualmente</span></div>
+          <div class="lrow"><span>CND Trabalhista</span> <span class="badge b-ok">✓ Baixado</span></div>
+          <div class="lrow"><span>Certificado FGTS</span> <span class="badge b-ok">✓ Baixado</span></div>
+          <div class="lrow"><span>CND Federal</span> <span class="badge b-manual">⚠ Emitir manualmente</span></div>
         </div>
         <p class="tip" style="margin-top:12px">
           <span class="badge b-ok">✓ Baixado</span> pronto &nbsp;·&nbsp;
@@ -321,7 +327,7 @@
           <h2 style="color:var(--manual)">Três certidões <u>sempre</u> pedem você</h2>
           <ul>
             <li><b>CND Federal (Receita)</b></li>
-            <li><b>Consulta CNPJ / Cartão CNPJ (Receita)</b></li>
+            <li><b>Cartão CNPJ (Receita)</b></li>
             <li><b>CEIS (CGU)</b> — o captcha dela nenhum programa resolve.</li>
           </ul>
         </div>
@@ -359,6 +365,7 @@
       <div class="mini2"><h4>Juntar PDFs</h4><p>Une vários documentos num único PDF, na ordem que você escolher.</p></div>
       <div class="mini2"><h4>Tema claro ou escuro</h4><p>Botão de sol/lua no menu lateral. Escolha o que enxergar melhor — fica salvo.</p></div>
       <div class="mini2"><h4>Cor de destaque</h4><p>Em Configurações dá para trocar a cor do programa entre 6 opções.</p></div>
+      <div class="mini2"><h4>Perfis de download</h4><p>Em Configurações › Perfis, escolha exatamente quais certidões os botões CNPJ/CPF marcam — útil se você sempre usa só algumas.</p></div>
     </div>
   </div>
 
@@ -380,6 +387,10 @@
       <details>
         <summary>Por que numa rede pede mais captcha do que em outra?</summary>
         <p>Alguns sites do governo ficam mais “desconfiados” em redes com proxy ou bloqueios (comum em rede corporativa). Aí eles pedem o captcha com mais frequência. Em casa/numa rede comum, costuma pedir menos. Em todos os casos é só resolver na janela que o programa abriu.</p>
+      </details>
+      <details>
+        <summary>O que significam as etiquetas “CNPJ” e “CPF” do lado de cada certidão?</summary>
+        <p>Mostram para quem aquela certidão está disponível. A maioria já aceita os dois — só o Cartão CNPJ é exclusivo de empresa (CNPJ). Se você sempre usa o mesmo conjunto de certidões, dá para salvar isso como um <b>perfil</b> em Configurações › Perfis, e os botões "Marcar: CNPJ/CPF" passam a marcar só o que você escolheu.</p>
       </details>
       <details>
         <summary>Preciso digitar CNPJ com pontos e barra?</summary>
