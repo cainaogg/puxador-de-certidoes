@@ -309,7 +309,7 @@
     atualizaSel();
   }
   function atualizaSel(){
-    // conta por tipo ativo dentro do perfil (Padrão: só CNPJ=13, só CPF=5, ambos=18)
+    // conta por tipo ativo dentro do perfil (Padrão: soma dinâmica conforme aceita/perfil)
     const total = checks().filter(x=>x.checked).reduce((s,x)=>{
       const ativos = ['CNPJ','CPF'].filter(t => TAG_ON[t] && noPerfil(x.dataset.id, t)).length;
       return s + Math.max(1, ativos);
@@ -464,7 +464,7 @@
           }).join('')}
         </div>
         ${travado
-          ? `<div class="cfg-sub" style="margin-top:12px">O <b>Padrão</b> é fixo (todas as 13 de CNPJ + as 5 de CPF) e não pode ser editado. Clique em <b>+ Novo</b> para criar o seu.</div>`
+          ? (()=>{ const pd=padraoPerfil(); return `<div class="cfg-sub" style="margin-top:12px">O <b>Padrão</b> é fixo (todas as ${pd.cnpj.length} de CNPJ + as ${pd.cpf.length} de CPF) e não pode ser editado. Clique em <b>+ Novo</b> para criar o seu.</div>`; })()
           : `<div class="pf-acoes"><button class="btn btn-primary" onclick="salvarPerfil()">Salvar perfil</button>${_pfEdit!=='' ? `<button class="btn btn-outline" onclick="excluirPerfil('${esc(_pfEdit)}')">Excluir</button>`:''}</div>`}
       </div>`;
   }

@@ -35,7 +35,7 @@ class CNDT(ModuloCertidao):
     url = "https://cndt-certidao.tst.jus.br/gerarCertidao.faces"
     requer_captcha = True
     implementado = True
-    aceita = frozenset({TipoDoc.CNPJ})
+    aceita = frozenset({TipoDoc.CNPJ, TipoDoc.CPF})
 
     SEL_CPF_CNPJ = '[id="gerarCertidaoForm:cpfCnpj"]'
     SEL_CAMPO_CAPTCHA = "#idCampoResposta"
