@@ -17,6 +17,11 @@ PADRAO = {
     "accent": "#3B82F6",
     # Tema da interface nova: "dark" (padrão) ou "light".
     "tema": "dark",
+    # Perfis de download: definem quais certidões os chips CNPJ/CPF marcam.
+    # "Padrão" é fixo (computado na interface) e NÃO fica aqui — só os perfis
+    # criados pelo usuário: {nome: {"cnpj": [ids], "cpf": [ids]}}.
+    "perfis": {},
+    "perfil_ativo": "Padrão",
 }
 
 

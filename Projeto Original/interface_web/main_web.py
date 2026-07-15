@@ -99,6 +99,39 @@ def salvar_tema(tema):
     config.salvar(tema=tema)
 
 
+# --- Perfis de download (o "Padrão" é fixo/computado na interface) ---
+@eel.expose
+def listar_perfis():
+    c = config.carregar()
+    return {"perfis": c.get("perfis", {}), "ativo": c.get("perfil_ativo", "Padrão")}
+
+
+@eel.expose
+def salvar_perfil(nome, cnpj_ids, cpf_ids):
+    nome = (nome or "").strip()
+    if not nome or nome == "Padrão":  # "Padrão" é travado; nome vazio ignorado
+        return
+    perfis = dict(config.carregar().get("perfis", {}))
+    perfis[nome] = {"cnpj": list(cnpj_ids or []), "cpf": list(cpf_ids or [])}
+    config.salvar(perfis=perfis, perfil_ativo=nome)
+
+
+@eel.expose
+def remover_perfil(nome):
+    if nome == "Padrão":
+        return
+    c = config.carregar()
+    perfis = dict(c.get("perfis", {}))
+    perfis.pop(nome, None)
+    ativo = c.get("perfil_ativo", "Padrão")
+    config.salvar(perfis=perfis, perfil_ativo=("Padrão" if ativo == nome else ativo))
+
+
+@eel.expose
+def definir_perfil_ativo(nome):
+    config.salvar(perfil_ativo=(nome or "Padrão"))
+
+
 @eel.expose
 def listar_certidoes():
     def tags(m):

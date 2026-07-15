@@ -76,8 +76,8 @@
   .tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;transition:.12s}
   .tag.t-CNPJ{color:#93a9dd;background:rgba(99,140,255,.14)}
   .tag.t-CPF{color:#bda9e8;background:rgba(167,139,250,.16)}
-  #lista.on-CNPJ .tag.t-CNPJ{color:#0a1330;background:#7d9bff}
-  #lista.on-CPF .tag.t-CPF{color:#160a2e;background:#bfa4f8}
+  .tag.t-CNPJ.acesa{color:#0a1330;background:#7d9bff}
+  .tag.t-CPF.acesa{color:#160a2e;background:#bfa4f8}
   .lista{max-height:340px;overflow-y:auto;padding-right:4px}
   .linha{display:flex;align-items:center;gap:10px;padding:8px 6px;border-radius:9px}
   .linha:hover{background:var(--panelAlt)}
@@ -145,6 +145,22 @@
   .apilink:hover{text-decoration:underline}
   .apilink svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2}
   .credito{color:#6ee39b;font-weight:700}
+  /* editor de perfis */
+  .pf-sel{width:100%;background:var(--inputBg);border:1px solid var(--border);border-radius:9px;color:var(--text);padding:9px 10px;font-size:13px}
+  .pf-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .pf-tab{font-size:12px;font-weight:600;padding:5px 11px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--subtext);cursor:pointer}
+  .pf-tab:hover{color:var(--text);border-color:var(--text)}
+  .pf-tab.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .pf-tab.novo{color:var(--accent);border-style:dashed}
+  .pf-nome{width:100%;background:var(--inputBg);border:1px solid var(--border);border-radius:9px;color:var(--text);padding:9px 10px;font-size:13px;margin-top:10px}
+  .pf-docs{margin-top:10px;border:1px solid var(--border);border-radius:9px;max-height:200px;overflow-y:auto}
+  .pf-row{display:flex;align-items:center;gap:10px;padding:7px 12px;border-top:1px solid var(--border);font-size:13px}
+  .pf-row:first-child{border-top:0}
+  .pf-row .pf-nm{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pf-ck{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--subtext);cursor:pointer}
+  .pf-ck.off{opacity:.35;cursor:not-allowed}
+  .pf-acoes{display:flex;gap:10px;margin-top:14px}
+  .pf-acoes .btn{width:auto;flex:0 0 auto;padding:10px 18px}
   .modal input[type=password]{width:100%;background:var(--inputBg);border:1px solid var(--border);
     border-radius:9px;color:var(--text);padding:10px;font-size:13px}
   /* scrollbar fina */
@@ -228,6 +244,10 @@
     aplicaTema((cfg && cfg.tema) || 'dark');
     CERTS = await eel.listar_certidoes()();
     render();
+    const pf = await eel.listar_perfis()();
+    PERFIS = (pf && pf.perfis) || {};
+    PERFIL_ATIVO = (pf && pf.ativo) || 'Padrão';
+    if(PERFIL_ATIVO!=='Padrão' && !PERFIS[PERFIL_ATIVO]) PERFIL_ATIVO='Padrão';
     document.getElementById('s-disp').textContent = CERTS.filter(c=>c.impl).length;
     setInterval(poll, 150);   // consulta a fila de updates do Python
   }
@@ -255,31 +275,42 @@
     });
   }
   let TAG_ON = {CNPJ:false, CPF:false};   // estado de cada chip (independente)
+  let PERFIS = {}, PERFIL_ATIVO = 'Padrão';
   function checks(){return [...document.querySelectorAll('#lista input[type=checkbox]')]}
   function certDe(x){ return CERTS.find(c=>c.id===x.dataset.id) || {}; }
+  // "Padrão": todas as de CNPJ + todas as CPF-capazes (computado, não editável).
+  function padraoPerfil(){ return {
+    cnpj: CERTS.filter(c=>(c.tags||[]).includes('CNPJ')).map(c=>c.id),
+    cpf:  CERTS.filter(c=>(c.tags||[]).includes('CPF')).map(c=>c.id) }; }
+  function perfilAtual(){ return PERFIL_ATIVO==='Padrão' ? padraoPerfil() : (PERFIS[PERFIL_ATIVO]||padraoPerfil()); }
+  function noPerfil(id, tag){ return (perfilAtual()[tag.toLowerCase()]||[]).includes(id); }
+
   function toggleTag(tag){ TAG_ON[tag] = !TAG_ON[tag]; aplicaTags(); }
   function aplicaTags(){
-    // marcado = coberto por ALGUM chip ativo (união). Assim CNPJ e CPF não brigam:
-    // desligar um não desmarca o que o outro ainda cobre.
+    // marcado = coberto por algum chip ATIVO E incluído no PERFIL ativo daquele tipo.
     checks().forEach(x=>{ if(x.disabled) return;
-      const tags = certDe(x).tags || [];
-      x.checked = tags.some(t => TAG_ON[t]);
+      x.checked = ['CNPJ','CPF'].some(t => TAG_ON[t] && noPerfil(x.dataset.id, t));
     });
     atualizaSel();
   }
   function atualizaSel(){
-    // conta por TIPO ATIVO: cada doc soma 1 por chip ligado que o cobre.
-    // só CNPJ -> 13; só CPF -> 5; ambos -> 18. (seleção manual conta 1)
+    // conta por tipo ativo dentro do perfil (Padrão: só CNPJ=13, só CPF=5, ambos=18)
     const total = checks().filter(x=>x.checked).reduce((s,x)=>{
-      const ativos = (certDe(x).tags||[]).filter(t=>TAG_ON[t]).length;
+      const ativos = ['CNPJ','CPF'].filter(t => TAG_ON[t] && noPerfil(x.dataset.id, t)).length;
       return s + Math.max(1, ativos);
     }, 0);
     document.getElementById('s-sel').textContent = total;
-    const lista=document.getElementById('lista');
     ['CNPJ','CPF'].forEach(tag=>{
       const chip=document.querySelector(`.tchip[data-tag="${tag}"]`);
       if(chip) chip.classList.toggle('on', TAG_ON[tag]);
-      lista.classList.toggle('on-'+tag, TAG_ON[tag]);
+    });
+    // tags acendem POR LINHA: só se o chip está ligado e o doc está no perfil ativo.
+    document.querySelectorAll('#lista .linha').forEach(row=>{
+      const id = row.querySelector('input') && row.querySelector('input').dataset.id;
+      ['CNPJ','CPF'].forEach(t=>{
+        const el = row.querySelector('.tag.t-'+t);
+        if(el) el.classList.toggle('acesa', TAG_ON[t] && noPerfil(id, t));
+      });
     });
   }
   function toggleDrawer(){
@@ -325,14 +356,7 @@
       </div>
       <div class="cfg-main">
         <button class="x" onclick="fecharModal()">✕</button>
-        <div class="cfg-pane on" data-pane="perfis">
-          <div class="cfg-h">Perfis de download <span class="wip">🚧 Em construção</span></div>
-          <div class="cfg-sub">Um perfil define quais certidões são marcadas ao clicar em CNPJ ou CPF.</div>
-          <div class="apibox">
-            <b>Perfil: Padrão</b>
-            <div style="margin-top:6px">Já vem com <b>todas as 13 de CNPJ</b> e as <b>5 que também fazem CPF</b> (18 no total). Em breve você poderá <b>criar perfis próprios</b> — ex.: só os 3 documentos que usa num contrato — e escolher exatamente o que cada tag (CNPJ/CPF) marca.</div>
-          </div>
-        </div>
+        <div class="cfg-pane on" data-pane="perfis" id="pf-pane"></div>
         <div class="cfg-pane" data-pane="receita">
           <div class="cfg-h">Preferência de Download <span class="wip">🚧 Em construção</span></div>
           <div class="cfg-sub">Como o programa baixa a Receita Federal (CND Federal e Cartão CNPJ). Vamos melhorar esta seção em breve.</div>
@@ -373,10 +397,14 @@
         </div>
         <div class="cfg-foot"><button class="btn btn-primary" onclick="salvarConfig()">Salvar</button></div>
       </div></div>`, true);
+    renderPerfis();
+    document.querySelector('.cfg-foot').style.display='none';
   }
   function cfgTab(name){
     document.querySelectorAll('.cfg-tab').forEach(t=>t.classList.toggle('on', t.dataset.tab===name));
     document.querySelectorAll('.cfg-pane').forEach(p=>p.classList.toggle('on', p.dataset.pane===name));
+    const foot=document.querySelector('.cfg-foot'); if(foot) foot.style.display=(name==='perfis'?'none':'');
+    if(name==='perfis') renderPerfis();
   }
   function setModo(m){ _modo=m;
     document.getElementById('m-nav').classList.toggle('on', m==='navegador');
@@ -385,6 +413,62 @@
     const cl=document.getElementById('t-claro'), es=document.getElementById('t-escuro');
     if(cl) cl.classList.toggle('on', t==='light'); if(es) es.classList.toggle('on', t!=='light'); }
   function salvarConfig(){ eel.salvar_config(_modo, document.getElementById('cfg-token').value)(); fecharModal(); }
+
+  // ---- editor de perfis ----
+  let _pfEdit = 'Padrão';   // qual perfil está aberto no editor
+  function nomesPerfis(){ return ['Padrão', ...Object.keys(PERFIS)]; }
+  function reaplicar(){ if(TAG_ON.CNPJ||TAG_ON.CPF) aplicaTags(); else atualizaSel(); }
+  function renderPerfis(){
+    const pane=document.getElementById('pf-pane'); if(!pane) return;
+    if(!nomesPerfis().includes(_pfEdit) && _pfEdit!=='') _pfEdit='Padrão';
+    const nomes=nomesPerfis(), travado=(_pfEdit==='Padrão');
+    const p = _pfEdit==='' ? {cnpj:[],cpf:[]} : (_pfEdit==='Padrão'? padraoPerfil() : (PERFIS[_pfEdit]||{cnpj:[],cpf:[]}));
+    pane.innerHTML = `
+      <div class="cfg-h">Perfis de download</div>
+      <div class="cfg-sub">Um perfil define quais certidões os chips CNPJ e CPF marcam na lista.</div>
+      <div class="campo"><label>Perfil ativo</label>
+        <select class="pf-sel" onchange="ativarPerfil(this.value)">
+          ${nomes.map(n=>`<option ${n===PERFIL_ATIVO?'selected':''}>${esc(n)}</option>`).join('')}
+        </select></div>
+      <div class="campo"><label>Editar / criar</label>
+        <div class="pf-tabs">
+          ${nomes.map(n=>`<button class="pf-tab ${n===_pfEdit?'on':''}" onclick="editarPerfil('${esc(n)}')">${esc(n)}</button>`).join('')}
+          <button class="pf-tab novo ${_pfEdit===''?'on':''}" onclick="editarPerfil('')">+ Novo</button>
+        </div>
+        <input class="pf-nome" id="pf-nome" placeholder="Nome do perfil" value="${esc(_pfEdit==='Padrão'?'':_pfEdit)}" ${travado?'disabled':''}>
+        <div class="pf-docs">
+          ${CERTS.map(c=>{
+            const cnpj=(p.cnpj||[]).includes(c.id), cpf=(p.cpf||[]).includes(c.id), cpfOk=(c.tags||[]).includes('CPF');
+            return `<div class="pf-row"><span class="pf-nm">${esc(c.label)}</span>
+              <label class="pf-ck"><input type="checkbox" data-id="${c.id}" data-t="cnpj" ${cnpj?'checked':''} ${travado?'disabled':''}>CNPJ</label>
+              <label class="pf-ck ${cpfOk?'':'off'}"><input type="checkbox" data-id="${c.id}" data-t="cpf" ${cpf?'checked':''} ${(!cpfOk||travado)?'disabled':''}>CPF</label>
+            </div>`;
+          }).join('')}
+        </div>
+        ${travado
+          ? `<div class="cfg-sub" style="margin-top:12px">O <b>Padrão</b> é fixo (todas as 13 de CNPJ + as 5 de CPF) e não pode ser editado. Clique em <b>+ Novo</b> para criar o seu.</div>`
+          : `<div class="pf-acoes"><button class="btn btn-primary" onclick="salvarPerfil()">Salvar perfil</button>${_pfEdit!=='' ? `<button class="btn btn-outline" onclick="excluirPerfil('${esc(_pfEdit)}')">Excluir</button>`:''}</div>`}
+      </div>`;
+  }
+  function ativarPerfil(nome){ PERFIL_ATIVO=nome; eel.definir_perfil_ativo(nome)(); reaplicar(); }
+  function editarPerfil(nome){ _pfEdit=nome; renderPerfis(); }
+  function salvarPerfil(){
+    const nome=(document.getElementById('pf-nome').value||'').trim();
+    if(!nome){ alert('Dê um nome ao perfil.'); return; }
+    if(nome==='Padrão'){ alert('"Padrão" é reservado — escolha outro nome.'); return; }
+    const cnpj=[], cpf=[];
+    document.querySelectorAll('.pf-docs input:checked').forEach(ck=>{ (ck.dataset.t==='cpf'?cpf:cnpj).push(ck.dataset.id); });
+    eel.salvar_perfil(nome, cnpj, cpf)();
+    PERFIS[nome]={cnpj,cpf}; PERFIL_ATIVO=nome; _pfEdit=nome;
+    renderPerfis(); reaplicar();
+  }
+  function excluirPerfil(nome){
+    if(nome==='Padrão'||nome==='') return;
+    eel.remover_perfil(nome)();
+    delete PERFIS[nome];
+    if(PERFIL_ATIVO===nome) PERFIL_ATIVO='Padrão';
+    _pfEdit='Padrão'; renderPerfis(); reaplicar();
+  }
   const ACCENTS=['#3B82F6','#8B5CF6','#16A34A','#C8952E','#E8763C','#E5484D'];
   function setAccent(cor){
     document.documentElement.style.setProperty('--accent', cor);
