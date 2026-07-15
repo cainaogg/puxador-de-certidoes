@@ -21,6 +21,7 @@ from pathlib import Path
 from tkinter import filedialog
 
 import eel
+from playwright.sync_api import sync_playwright
 
 # Rodando do código: permite importar `certidoes` (um nível acima). No .exe, o
 # PyInstaller já embute o pacote — não mexe no path.
@@ -34,10 +35,17 @@ from certidoes.base import (  # noqa: E402
     verificar_vencimentos,
 )
 from certidoes.documento import DocumentoInvalido, TipoDoc, detectar  # noqa: E402
-from certidoes.engine import _pasta_do_grupo, executar_lote, nomear_pasta_mae  # noqa: E402
+from certidoes.engine import (  # noqa: E402
+    _abrir_contexto, _pasta_do_grupo, executar_lote, nomear_pasta_mae,
+)
 from certidoes.registry import REGISTRY, por_id  # noqa: E402
 
 PASTA_BASE = paths.base_dados() / "downloads"
+
+# Certidões que SEMPRE exigem o usuário (nenhuma tentativa automática — a Receita
+# e a CGU bloqueiam automação/só têm hCaptcha Enterprise). Em vez de interromper
+# o lote espalhado, ficam para uma fila única no final (ver _rodar_fila_manual).
+SEMPRE_MANUAL = {"receita_federal", "consulta_cnpj", "cgu_correcional"}
 # Pasta da UI: no .exe (onefile) fica em _MEIPASS/interface_web; no código, aqui.
 WEB = (Path(getattr(sys, "_MEIPASS", "")) / "interface_web"
        if getattr(sys, "frozen", False) else Path(__file__).resolve().parent)
@@ -161,6 +169,23 @@ def resumo_vencimentos(dias=15):
         out.append({"empresa": empresa, "arquivo": pdf.name,
                     "data": d.strftime("%d/%m/%Y"), "restam": restam})
     return out
+
+
+@eel.expose
+def escolher_pasta_processo():
+    """Seletor de pasta (dentro de PASTA_BASE) para o botão "Atualizar processo":
+    reconhece o CNPJ/CPF pelo nome da pasta, para refazer a busca desse documento.
+    O motor já pula sozinho o que ainda está válido (certidao_valida_existente),
+    então isso na prática só baixa o que venceu ou nunca saiu — não precisa de
+    lógica nova para "achar o que falta"."""
+    origem = _pedir_pasta("Pasta da empresa/pessoa para atualizar")
+    if not origem:
+        return {"ok": False}
+    try:
+        doc = detectar(Path(origem).name)
+    except DocumentoInvalido:
+        return {"ok": False, "erro": "Não reconheci um CNPJ/CPF válido no nome dessa pasta."}
+    return {"ok": True, "numero": doc.formatado, "tipo": doc.tipo.value.upper()}
 
 
 @eel.expose
@@ -320,6 +345,7 @@ def _rodar(entries, modulos) -> None:
 
     inicio_sessao = time.time()
     pendencias = []  # (modulo_id, número, pasta destino) p/ importar da Downloads
+    fila_manual = []  # (doc, nasc, nome, dono, [módulos sempre-manuais desta linha])
     try:
         for i, (doc, nasc, nome) in enumerate(entries):
             if _cancel.is_set():
@@ -333,12 +359,23 @@ def _rodar(entries, modulos) -> None:
             if not aplic:
                 _emit({"t": "log", "m": f"  (nenhuma certidão marcada se aplica a {doc.tipo.value.upper()})"})
                 continue
-            resultados = executar_lote(doc, aplic, PASTA_BASE, on_log, on_status,
-                                       _cancel, nasc, nome, documento_pasta=donos[i])
-            grupo = _pasta_do_grupo(PASTA_BASE, donos[i])
-            for r in resultados:
-                if r.status is Status.MANUAL:
-                    pendencias.append((r.modulo_id, doc.numero, grupo))
+            # As "sempre manuais" ficam para a fila do final (não interrompem aqui).
+            aplic_auto = [m for m in aplic if m.id not in SEMPRE_MANUAL]
+            aplic_manual = [m for m in aplic if m.id in SEMPRE_MANUAL]
+            if aplic_manual:
+                fila_manual.append((doc, nasc, nome, donos[i], aplic_manual))
+            if aplic_auto:
+                resultados = executar_lote(doc, aplic_auto, PASTA_BASE, on_log, on_status,
+                                           _cancel, nasc, nome, documento_pasta=donos[i])
+                grupo = _pasta_do_grupo(PASTA_BASE, donos[i])
+                for r in resultados:
+                    if r.status is Status.MANUAL:
+                        pendencias.append((r.modulo_id, doc.numero, grupo))
+
+        if fila_manual and not _cancel.is_set():
+            _emit({"t": "log", "m": "\n===== Fila de emissão manual (uma vez, no final) ====="})
+            pendencias += _rodar_fila_manual(fila_manual, on_log, on_status)
+
         _emit({"t": "log", "m": "\nConcluído."})
         if pendencias and not _cancel.is_set():
             threading.Thread(target=_importar_downloads,
@@ -347,6 +384,58 @@ def _rodar(entries, modulos) -> None:
         _emit({"t": "log", "m": f"Erro geral: {type(exc).__name__}: {exc}"})
     finally:
         _emit({"t": "fim"})
+
+
+def _rodar_fila_manual(fila, on_log, on_status):
+    """Processa, de uma vez só no final do lote, as certidões que sempre exigem o
+    usuário — em vez de interromper espalhado ao longo da execução.
+
+    Primeiro a Receita/Cartão CNPJ (abrem aba no navegador do sistema e não
+    esperam nada — disparam todas juntas, ficam "cozinhando" enquanto o resto
+    roda). Depois o CEIS/CGU (exige resolver um captcha de imagens por vez),
+    num único navegador reaproveitado entre as empresas, para não abrir/fechar
+    um a cada uma."""
+    pendencias = []
+
+    for doc, nasc, nome, dono, mods in fila:
+        if _cancel.is_set():
+            break
+        rapidos = [m for m in mods if m.id != "cgu_correcional"]
+        if not rapidos:
+            continue
+        on_log(f"\n----- {doc.formatado} -----")
+        resultados = executar_lote(doc, rapidos, PASTA_BASE, on_log, on_status,
+                                   _cancel, nasc, nome, documento_pasta=dono)
+        grupo = _pasta_do_grupo(PASTA_BASE, dono)
+        for r in resultados:
+            if r.status is Status.MANUAL:
+                pendencias.append((r.modulo_id, doc.numero, grupo))
+
+    pendentes_cgu = [(doc, nasc, nome, dono) for doc, nasc, nome, dono, mods in fila
+                     if any(m.id == "cgu_correcional" for m in mods)]
+    if pendentes_cgu and not _cancel.is_set():
+        modulo_cgu = por_id("cgu_correcional")
+        on_log(f"\nCEIS (CGU): {len(pendentes_cgu)} pendente(s) — resolva o captcha de cada uma.")
+        with sync_playwright() as pw:
+            contexto = _abrir_contexto(pw, on_log)
+            try:
+                for doc, nasc, nome, dono in pendentes_cgu:
+                    if _cancel.is_set():
+                        break
+                    on_log(f"\n----- {doc.formatado} (CEIS) -----")
+                    resultados = executar_lote(doc, [modulo_cgu], PASTA_BASE, on_log, on_status,
+                                               _cancel, nasc, nome, documento_pasta=dono,
+                                               contexto_compartilhado=contexto)
+                    grupo = _pasta_do_grupo(PASTA_BASE, dono)
+                    for r in resultados:
+                        if r.status is Status.MANUAL:
+                            pendencias.append((r.modulo_id, doc.numero, grupo))
+            finally:
+                try:
+                    contexto.close()
+                except Exception:  # noqa: BLE001
+                    pass
+    return pendencias
 
 
 def _importar_downloads(pendencias, inicio_sessao: float) -> None:

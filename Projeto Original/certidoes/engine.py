@@ -178,12 +178,18 @@ def executar_lote(
     data_nascimento: str = "",
     nome_informado: str = "",
     documento_pasta: Documento = None,
+    contexto_compartilhado=None,
 ) -> List[Resultado]:
     """Executa cada módulo em sequência. Abre o navegador só se algum módulo precisar
     (módulos de API não usam navegador).
 
     `documento_pasta`: dono da pasta (ex.: o CNPJ, quando `documento` é o CPF de um
     sócio majoritário). Se None, a pasta é a do próprio `documento`.
+
+    `contexto_compartilhado`: se informado, reusa esse contexto Playwright já aberto
+    em vez de abrir/fechar um novo (quem chamou é responsável por fechá-lo depois).
+    Usado para processar uma fila de várias consultas manuais (ex.: CEIS) sem
+    reabrir o navegador a cada uma.
     """
     # A pasta é a do "dono" do grupo (o CNPJ, no caso de CPF de sócio) — reusa a
     # pasta-mãe existente (mesmo já renomeada). O nome bonito é aplicado no FIM.
@@ -290,7 +296,9 @@ def executar_lote(
                 except Exception:
                     pass
 
-    if precisa_navegador:
+    if contexto_compartilhado is not None:
+        rodar(contexto_compartilhado)  # quem chamou abre/fecha o navegador
+    elif precisa_navegador:
         with sync_playwright() as pw:
             context = _abrir_contexto(pw, on_log)
             try:
