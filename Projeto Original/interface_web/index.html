@@ -161,6 +161,16 @@
   .pf-ck.off{opacity:.35;cursor:not-allowed}
   .pf-acoes{display:flex;gap:10px;margin-top:14px}
   .pf-acoes .btn{width:auto;flex:0 0 auto;padding:10px 18px}
+  .pf-tab.novo.on{color:#fff}
+  /* indicador do perfil ativo (no cabeçalho da lista) */
+  .perfil-ind{font-size:12px;font-weight:600;color:var(--accent);background:var(--panelAlt);
+    border:1px solid var(--border);border-radius:999px;padding:3px 10px;white-space:nowrap}
+  /* toast flutuante */
+  .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(18px);
+    background:var(--panel);border:1px solid var(--border);color:var(--text);padding:11px 18px;
+    border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.45);font-size:13px;font-weight:600;
+    opacity:0;pointer-events:none;transition:.25s;z-index:100}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .modal input[type=password]{width:100%;background:var(--inputBg);border:1px solid var(--border);
     border-radius:9px;color:var(--text);padding:10px;font-size:13px}
   /* scrollbar fina */
@@ -202,7 +212,10 @@
         </div>
         <div class="card">
           <div class="cert-head">
-            <h2>Certidões</h2>
+            <div style="display:flex;align-items:center;gap:10px;min-width:0">
+              <h2>Certidões</h2>
+              <span class="perfil-ind" id="perfil-ind" title="Perfil ativo (Configurações › Perfis)"></span>
+            </div>
             <div class="tagfilter">
               <span class="tf-lbl">Marcar:</span>
               <button class="tchip" data-tag="CNPJ" onclick="toggleTag('CNPJ')" title="Pessoa Jurídica — marca/desmarca todas as de CNPJ">CNPJ</button>
@@ -219,6 +232,7 @@
     </div>
   </div>
 </div>
+<div class="toast" id="toast"></div>
 <div class="overlay" id="overlay" onclick="if(event.target===this)fecharModal()">
   <div class="modal" id="modal"></div>
 </div>
@@ -248,6 +262,7 @@
     PERFIS = (pf && pf.perfis) || {};
     PERFIL_ATIVO = (pf && pf.ativo) || 'Padrão';
     if(PERFIL_ATIVO!=='Padrão' && !PERFIS[PERFIL_ATIVO]) PERFIL_ATIVO='Padrão';
+    atualizaIndPerfil();
     document.getElementById('s-disp').textContent = CERTS.filter(c=>c.impl).length;
     setInterval(poll, 150);   // consulta a fila de updates do Python
   }
@@ -418,6 +433,9 @@
   let _pfEdit = 'Padrão';   // qual perfil está aberto no editor
   function nomesPerfis(){ return ['Padrão', ...Object.keys(PERFIS)]; }
   function reaplicar(){ if(TAG_ON.CNPJ||TAG_ON.CPF) aplicaTags(); else atualizaSel(); }
+  function atualizaIndPerfil(){ const el=document.getElementById('perfil-ind'); if(el) el.textContent='Perfil: '+PERFIL_ATIVO; }
+  let _toastT;
+  function toast(msg){ const t=document.getElementById('toast'); if(!t) return; t.textContent=msg; t.classList.add('show'); clearTimeout(_toastT); _toastT=setTimeout(()=>t.classList.remove('show'),2200); }
   function renderPerfis(){
     const pane=document.getElementById('pf-pane'); if(!pane) return;
     if(!nomesPerfis().includes(_pfEdit) && _pfEdit!=='') _pfEdit='Padrão';
@@ -450,7 +468,7 @@
           : `<div class="pf-acoes"><button class="btn btn-primary" onclick="salvarPerfil()">Salvar perfil</button>${_pfEdit!=='' ? `<button class="btn btn-outline" onclick="excluirPerfil('${esc(_pfEdit)}')">Excluir</button>`:''}</div>`}
       </div>`;
   }
-  function ativarPerfil(nome){ PERFIL_ATIVO=nome; eel.definir_perfil_ativo(nome)(); reaplicar(); }
+  function ativarPerfil(nome){ PERFIL_ATIVO=nome; eel.definir_perfil_ativo(nome)(); reaplicar(); atualizaIndPerfil(); toast('Perfil "'+nome+'" ativado'); }
   function editarPerfil(nome){ _pfEdit=nome; renderPerfis(); }
   function salvarPerfil(){
     const nome=(document.getElementById('pf-nome').value||'').trim();
@@ -460,14 +478,14 @@
     document.querySelectorAll('.pf-docs input:checked').forEach(ck=>{ (ck.dataset.t==='cpf'?cpf:cnpj).push(ck.dataset.id); });
     eel.salvar_perfil(nome, cnpj, cpf)();
     PERFIS[nome]={cnpj,cpf}; PERFIL_ATIVO=nome; _pfEdit=nome;
-    renderPerfis(); reaplicar();
+    renderPerfis(); reaplicar(); atualizaIndPerfil(); toast('Perfil "'+nome+'" salvo e ativado');
   }
   function excluirPerfil(nome){
     if(nome==='Padrão'||nome==='') return;
     eel.remover_perfil(nome)();
     delete PERFIS[nome];
     if(PERFIL_ATIVO===nome) PERFIL_ATIVO='Padrão';
-    _pfEdit='Padrão'; renderPerfis(); reaplicar();
+    _pfEdit='Padrão'; renderPerfis(); reaplicar(); atualizaIndPerfil(); toast('Perfil excluído');
   }
   const ACCENTS=['#3B82F6','#8B5CF6','#16A34A','#C8952E','#E8763C','#E5484D'];
   function setAccent(cor){
