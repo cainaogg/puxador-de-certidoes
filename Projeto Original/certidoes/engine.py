@@ -304,6 +304,16 @@ def executar_lote(
             on_status(modulo.id, res)
             resultados.append(res)
             if page is not None:
+                # Um clique na janela antes de fechar — na prática, era o que o
+                # usuário fazia manualmente para "destravar" a aba (ela parecia
+                # continuar tentando preencher/resolver captcha até um clique
+                # acontecer). Sem risco: o arquivo já foi salvo, e a aba fecha
+                # em seguida de qualquer forma.
+                try:
+                    page.bring_to_front()
+                    page.mouse.click(5, 5)
+                except Exception:  # noqa: BLE001
+                    pass
                 try:
                     page.close()
                 except Exception:
