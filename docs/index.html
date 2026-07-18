@@ -54,9 +54,15 @@
   /* ---- "Veja o programa": recriação fiel da janela ---- */
   .herocap{margin:26px 0 10px; font-size:15px; color:var(--sub)}
   .scroller{overflow-x:auto; border-radius:14px; box-shadow:var(--shadow)}
-  .window{ background:var(--aBg); border:1px solid var(--aBorder); border-radius:14px;
+  .window{ position:relative; background:var(--aBg); border:1px solid var(--aBorder); border-radius:14px;
            display:grid; grid-template-columns:58px 1fr; min-width:760px; color:var(--aText);
            font-family:"Segoe UI",system-ui,sans-serif; }
+  .wbell{position:absolute; top:14px; right:16px; width:34px; height:34px; border-radius:9px;
+    background:var(--aPanel); border:1px solid var(--aBorder); color:var(--aSub);
+    display:flex; align-items:center; justify-content:center}
+  .wbell svg{width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round}
+  .wbell-badge{position:absolute; top:-6px; right:-6px; min-width:16px; height:16px; padding:0 4px; border-radius:999px;
+    background:#EF4444; color:#fff; font-size:10px; font-weight:800; display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 2px var(--aBg)}
   .window svg{width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round}
   .pin{display:inline-flex; align-items:center; justify-content:center; width:23px; height:23px; border-radius:50%;
        background:var(--aAccent); color:#fff; font-size:13px; font-weight:800; font-variant-numeric:tabular-nums;
@@ -151,9 +157,6 @@
   .b-ok{background:var(--okBg); color:var(--ok)} .b-manual{background:var(--manualBg); color:var(--manual)}
   .b-erro{background:var(--erroBg); color:var(--erro)} .b-pend{background:var(--pendBg); color:var(--pend)}
 
-  .logbox{background:var(--aInput); border:1px solid var(--aBorder); border-radius:8px; padding:12px 14px; font-family:Consolas,monospace; font-size:14px; line-height:1.9; margin-top:8px}
-  .c-verde{color:#6ee39b} .c-amarelo{color:#e0b341} .c-vermelho{color:#ff6b6b}
-
   /* barra lateral explicada (ícones reais) */
   .icons{display:flex; flex-wrap:wrap; gap:12px; margin-top:8px}
   .icg{display:flex; align-items:center; gap:10px; background:var(--panel2); border:1px solid var(--border); border-radius:10px; padding:8px 14px 8px 10px}
@@ -202,9 +205,13 @@
   </header>
 
   <!-- VEJA O PROGRAMA -->
-  <p class="herocap">É esta a tela que você vai ver. Os números <b>azuis na imagem</b> marcam as 3 áreas: <b>1</b> o menu lateral (ícones) · <b>2</b> onde você cola os CNPJs/CPFs · <b>3</b> a lista das certidões.</p>
+  <p class="herocap">É esta a tela que você vai ver. Os números <b>azuis na imagem</b> marcam as 3 áreas: <b>1</b> o menu lateral (ícones) · <b>2</b> onde você cola os CNPJs/CPFs · <b>3</b> a lista das certidões. O <b>sino</b> no canto superior direito avisa sozinho quando alguma certidão está vencida ou perto de vencer (mais abaixo).</p>
   <div class="scroller">
     <div class="window">
+      <div class="wbell" title="Sino de notificações">
+        <svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="wbell-badge">3</span>
+      </div>
       <div class="wrail">
         <div class="pin" style="margin-bottom:6px">1</div>
         <div class="ib"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div>
@@ -332,6 +339,7 @@
           </ul>
         </div>
         <p class="tip"><b>Depende da rede:</b> as <b>outras</b> certidões normalmente resolvem o captcha sozinhas, mas em <b>algumas redes</b> (por exemplo, a internet do trabalho, com proxy/bloqueios) elas também podem pedir sua ajuda. Quando isso acontece, é a mesma coisa: o programa mostra o site e <b>espera você resolver</b> — depois segue sozinho.</p>
+        <p class="tip"><b>Tudo isso junto, no fim.</b> O programa baixa primeiro tudo o que consegue sozinho (de todos os CNPJs/CPFs da lista) e só <b>depois</b> te chama para as três manuais — assim você resolve os captchas de uma vez, sentado, em vez de ser interrompido aos poucos enquanto o resto ainda está rodando.</p>
         <p class="tip"><b>Não feche</b> a janela do programa enquanto ele espera um documento manual — é ele que vai buscar e organizar o arquivo.</p>
       </div>
     </div>
@@ -343,29 +351,39 @@
     <p class="intro">No programa aparece <b>só o ícone</b> — o nome surge quando você <b>passa o mouse por cima</b>. Estes são os mais usados:</p>
     <div class="icons">
       <div class="icg"><span class="glyph"><svg viewBox="0 0 24 24"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8L10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z"/></svg></span><span class="nm">Abrir pasta</span></div>
-      <div class="icg"><span class="glyph"><svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg></span><span class="nm">Escanear baixados</span></div>
+      <div class="icg"><span class="glyph"><svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg></span><span class="nm">Renomear Documentos</span></div>
       <div class="icg"><span class="glyph"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></span><span class="nm">Verificar validade</span></div>
       <div class="icg"><span class="glyph"><svg viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></span><span class="nm">Juntar PDFs</span></div>
+      <div class="icg"><span class="glyph"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg></span><span class="nm">Atualizar processo</span></div>
     </div>
+    <p class="intro" style="margin-top:14px;margin-bottom:0"><b>Renomear Documentos</b> (antigo "Escanear baixados") aplica os nomes atuais das certidões aos PDFs de uma pasta — útil se você renomeou algo na aba de Nomenclatura (mais abaixo) e quer atualizar arquivos antigos. <b>Atualizar processo</b> escolhe a pasta de uma empresa/pessoa já processada e refaz a busca — o programa já pula sozinho o que ainda está válido, então na prática só baixa o que venceu ou nunca saiu.</p>
+  </div>
+
+  <div class="section">
+    <h2>O sino de notificações</h2>
+    <p class="intro">Fica no canto superior direito, ao lado do título. Avisa sozinho — sem precisar clicar em nada — quando alguma certidão já baixada está vencida ou perto de vencer (nos próximos 15 dias).</p>
+    <div class="grid2">
+      <div class="mini2">
+        <h4>O número no sino</h4>
+        <p>Conta quantas certidões você <b>ainda não viu</b>. Some assim que você clicar no sino — mas elas continuam na lista, só o aviso é que desaparece.</p>
+      </div>
+      <div class="mini2">
+        <h4>Clique numa linha</h4>
+        <p>Mostra os detalhes: a empresa/pessoa, o documento e a data de vencimento — com um botão para <b>excluir</b> aquele aviso, se não precisar mais dele.</p>
+      </div>
+    </div>
+    <p class="tip" style="margin-top:14px">O botão <b>Verificar validade</b> do menu lateral faz essa mesma checagem na hora, sem pedir pasta — é útil se você quer conferir de novo sem esperar reabrir o programa.</p>
   </div>
 
   <div class="section">
     <h2>Onde ficam os arquivos</h2>
     <p class="intro">Tudo vai para uma pasta organizada por empresa/pessoa, com a validade no nome de cada arquivo. Clique no ícone de <b>pasta</b> (Abrir pasta) a qualquer momento para vê-los.</p>
     <div class="grid2">
-      <div class="mini2">
-        <h4>Verificar validade</h4>
-        <p style="margin-bottom:8px">Mostra o que está perto de vencer, por cores:</p>
-        <div class="logbox">
-          <span class="c-verde">[faltam 45d] 12.09.2026 — CND Federal.pdf</span><br>
-          <span class="c-amarelo">[faltam 5d] 18.07.2026 — FGTS.pdf</span><br>
-          <span class="c-vermelho">[VENCIDA] 30.06.2026 — Trabalhista.pdf</span>
-        </div>
-      </div>
       <div class="mini2"><h4>Juntar PDFs</h4><p>Une vários documentos num único PDF, na ordem que você escolher.</p></div>
       <div class="mini2"><h4>Tema claro ou escuro</h4><p>Botão de sol/lua no menu lateral. Escolha o que enxergar melhor — fica salvo.</p></div>
       <div class="mini2"><h4>Cor de destaque</h4><p>Em Configurações dá para trocar a cor do programa entre 6 opções.</p></div>
       <div class="mini2"><h4>Perfis de download</h4><p>Em Configurações › Perfis, escolha exatamente quais certidões os botões CNPJ/CPF marcam — útil se você sempre usa só algumas.</p></div>
+      <div class="mini2"><h4>Nomenclatura dos Documentos</h4><p>Em Configurações › Nomenclatura, escolha como cada certidão é nomeada no arquivo final. Clique num documento na lista, escreva o nome e salve — ou volte ao padrão quando quiser.</p></div>
     </div>
   </div>
 
@@ -399,6 +417,14 @@
       <details>
         <summary>Uma certidão deu “Erro”. Perdi as outras?</summary>
         <p>Não. Cada certidão é independente — as que deram certo ficam baixadas normalmente. Você pode tentar de novo só a que falhou.</p>
+      </details>
+      <details>
+        <summary>Excluí uma notificação do sino por engano. Ela some para sempre?</summary>
+        <p>Sim — "excluir" é para avisos que você já resolveu ou não precisa mais ver. Se a certidão continuar vencida, gere uma nova (pelo próprio programa) para ter o arquivo válido; o aviso antigo não volta sozinho.</p>
+      </details>
+      <details>
+        <summary>Para que serve o "Atualizar processo"?</summary>
+        <p>Para quando você já baixou as certidões de uma empresa/pessoa antes e quer só renovar o que venceu, sem refazer tudo do zero. Escolha a pasta dela e o programa reconhece o CNPJ/CPF sozinho — as certidões que ainda estão válidas são puladas automaticamente.</p>
       </details>
     </div>
   </div>

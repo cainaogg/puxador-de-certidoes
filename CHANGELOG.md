@@ -3,6 +3,51 @@
 Este arquivo resume o que mudou em cada versão do **Puxador de Certidões**
 (apenas a versão original em Python).
 
+## [2.3.0] — 2026-07-18
+
+### Sino de notificações de vencimento
+- **Avisa sozinho ao abrir o programa.** Um sino no canto superior direito mostra
+  quantas certidões já baixadas estão vencidas ou vencendo nos próximos 15 dias —
+  sem precisar clicar em nada.
+- **Lista com detalhe e exclusão.** Clique no sino para ver uma notificação por
+  linha; clique numa linha para ver empresa, documento e data de vencimento, com
+  um botão para excluir o aviso. Abrir o sino zera o contador, mas a lista continua
+  disponível para consulta.
+- **Botão "Verificar validade" refeito.** Não pede mais uma pasta — dispara a
+  mesma checagem automática na hora, sob demanda, e abre o sino com o resultado.
+
+### Fila única de captchas no fim do lote
+- As certidões que **sempre** exigem você (CND Federal, Cartão CNPJ e CEIS) não
+  interrompem mais o lote espalhadas ao longo da execução. O programa baixa
+  primeiro tudo que consegue sozinho, de todos os CNPJs/CPFs, e só depois te
+  chama para essas três — de uma vez, sentado, em vez de aos poucos.
+
+### Botão "Atualizar processo"
+- Escolhe a pasta de uma empresa/pessoa já processada, reconhece o CNPJ/CPF pelo
+  nome da pasta e refaz a busca — como o programa já pula sozinho o que ainda
+  está válido, na prática só baixa o que venceu ou nunca saiu.
+
+### Nomenclatura dos Documentos
+- **Configurações › Nomenclatura dos Documentos** (nova aba): escolha como cada
+  certidão é nomeada no arquivo final. Clique num documento na lista, escreva o
+  nome de sua preferência e salve — ou restaure o padrão do programa quando
+  quiser. Vale tanto para a renomeação automática quanto para o botão
+  **"Renomear Documentos"** (antigo "Escanear baixados", que ganhou esse nome
+  porque é exatamente o que ele faz).
+
+### Correções
+- **Abas órfãs em POA/TJRS/CNJ.** Depois de baixar, algumas certidões pareciam
+  "reabrir e tentar de novo" até um clique manual na janela. Corrigido em duas
+  frentes: os escutadores de página que causavam a aba fantasma agora são
+  removidos corretamente, e o programa simula um clique na janela antes de
+  fechá-la (sem risco — o arquivo já foi salvo nesse momento).
+- **Duas janelas abrindo ao mesmo tempo.** Um clique duplo (ou usar "Atualizar
+  processo" durante uma busca em andamento) podia disparar dois lotes em
+  paralelo, cada um com seu próprio navegador. Agora uma segunda tentativa é
+  rejeitada com um aviso, enquanto a primeira continua normalmente.
+- **Popup de "Traduzir esta página?"** desabilitado — não aparece mais durante
+  a automação.
+
 ## [2.2.0] — 2026-07-15
 
 ### Perfis de download
