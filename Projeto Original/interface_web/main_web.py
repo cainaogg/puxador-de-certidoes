@@ -156,20 +156,45 @@ def listar_certidoes():
 @eel.expose
 def resumo_vencimentos(dias=15):
     """Certidões vencidas ou a vencer em `dias` na pasta padrão do programa — para
-    o aviso proativo do Painel. Sempre olha PASTA_BASE (não pede pasta ao usuário,
-    diferente do "Verificador" manual do menu, que continua livre para qualquer
-    pasta)."""
+    o sino de notificações do Painel. Sempre olha PASTA_BASE (não pede pasta ao
+    usuário, diferente do "Verificador" manual do menu, que continua livre para
+    qualquer pasta).
+
+    Cada item tem uma `chave` estável (caminho+data) usada para lembrar o que já
+    foi visto/excluído (fica salvo em config.json, então persiste entre aberturas
+    do programa) — excluídas somem da lista; vistas só param de contar no badge."""
     if not PASTA_BASE.exists():
         return []
+    c = config.carregar()
+    vistas = set(c.get("notif_vistas", []))
+    excluidas = set(c.get("notif_excluidas", []))
     out = []
     for pdf, d, restam in verificar_vencimentos(PASTA_BASE, dias=dias):
+        chave = f"{pdf}|{d.isoformat()}"
+        if chave in excluidas:
+            continue
         try:
             empresa = pdf.relative_to(PASTA_BASE).parts[0]
         except Exception:  # noqa: BLE001
             empresa = pdf.parent.name
-        out.append({"empresa": empresa, "arquivo": pdf.name,
-                    "data": d.strftime("%d/%m/%Y"), "restam": restam})
+        out.append({"chave": chave, "empresa": empresa, "arquivo": pdf.name,
+                    "data": d.strftime("%d/%m/%Y"), "restam": restam,
+                    "nova": chave not in vistas})
     return out
+
+
+@eel.expose
+def marcar_vencimentos_vistos(chaves):
+    vistas = set(config.carregar().get("notif_vistas", []))
+    vistas.update(chaves or [])
+    config.salvar(notif_vistas=list(vistas))
+
+
+@eel.expose
+def excluir_vencimento(chave):
+    excluidas = set(config.carregar().get("notif_excluidas", []))
+    excluidas.add(chave)
+    config.salvar(notif_excluidas=list(excluidas))
 
 
 @eel.expose

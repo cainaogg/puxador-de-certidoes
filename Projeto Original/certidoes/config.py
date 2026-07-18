@@ -22,6 +22,10 @@ PADRAO = {
     # criados pelo usuário: {nome: {"cnpj": [ids], "cpf": [ids]}}.
     "perfis": {},
     "perfil_ativo": "Padrão",
+    # Notificações de vencimento (sino no Painel): chaves (caminho+data) já vistas
+    # (some o badge, mas continua na lista) e já excluídas (some da lista).
+    "notif_vistas": [],
+    "notif_excluidas": [],
 }
 
 
