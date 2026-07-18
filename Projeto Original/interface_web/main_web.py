@@ -268,8 +268,6 @@ def acao(nome: str) -> None:
         _emit({"t": "log", "m": "Abrindo a pasta de downloads…"})
     elif nome == "escanear":
         threading.Thread(target=_escanear, daemon=True).start()
-    elif nome == "validade":
-        threading.Thread(target=_verificador, daemon=True).start()
     elif nome == "juntar":
         threading.Thread(target=_juntar, daemon=True).start()
     else:
@@ -319,25 +317,6 @@ def _escanear() -> None:
     if doc_pasta is not None:
         nomear_pasta_mae(Path(origem), doc_pasta, lambda m: _emit({"t": "log", "m": m}))
     _emit({"t": "log", "m": f"Escanear: {n} arquivo(s) renomeado(s)."})
-
-
-def _verificador() -> None:
-    origem = _pedir_pasta("Pasta para verificar a validade")
-    if not origem:
-        return
-    achados = verificar_vencimentos(Path(origem), dias=100000)
-    if not achados:
-        _emit({"t": "log", "m": "Verificador: nenhum PDF com validade no nome encontrado."})
-        return
-    _emit({"t": "log", "m": f"Verificador de Validade — {len(achados)} certidão(ões):"})
-    for pdf, d, restam in achados:
-        if restam < 0:
-            marca, cor = "[VENCIDA]", "vermelho"
-        elif restam <= 7:
-            marca, cor = f"[faltam {restam}d]", "amarelo"
-        else:
-            marca, cor = f"[faltam {restam}d]", "verde"
-        _emit({"t": "log", "m": f"  {marca} {d.strftime('%d.%m.%Y')} — {pdf.name}", "cor": cor})
 
 
 def _juntar() -> None:
