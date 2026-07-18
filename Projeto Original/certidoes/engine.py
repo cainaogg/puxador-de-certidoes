@@ -45,7 +45,12 @@ CANAIS_NAVEGADOR = [
 
 # Argumento que oculta a flag de automação (alguns órgãos, como a CGU, bloqueiam
 # navegadores automatizados via WAF/CloudFront com erro 403).
-ARGS_NAVEGADOR = ["--disable-blink-features=AutomationControlled"]
+ARGS_NAVEGADOR = [
+    "--disable-blink-features=AutomationControlled",
+    # Some sites are em português — sem isso o Edge/Chrome oferece "Traduzir esta
+    # página?" a cada navegação, atrapalhando a visão da tela.
+    "--disable-features=Translate,TranslateUI",
+]
 
 # Script injetado em toda página para remover marcas de automação (anti-bot).
 STEALTH_JS = """
