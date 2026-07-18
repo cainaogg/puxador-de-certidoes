@@ -188,6 +188,11 @@
   .pf-ck.off{opacity:.35;cursor:not-allowed}
   .pf-acoes{display:flex;gap:10px;margin-top:14px}
   .pf-acoes .btn{width:auto;flex:0 0 auto;padding:10px 18px}
+  .pf-row.nm-row{cursor:pointer}
+  .pf-row.nm-row:hover{background:var(--panelAlt)}
+  .pf-row.nm-row.sel{background:var(--accentSoft, var(--panelAlt));box-shadow:inset 3px 0 0 var(--accent)}
+  .nm-atual{flex:1;text-align:right;color:var(--subtext);font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:8px}
+  .nm-tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;background:rgba(59,130,246,.16);color:var(--accent);white-space:nowrap}
   .pf-tab.novo.on{color:#fff}
   /* indicador do perfil ativo (no cabeçalho da lista) */
   .perfil-ind{font-size:12px;font-weight:600;color:var(--accent);background:var(--panelAlt);
@@ -221,7 +226,7 @@
   <div class="rail">
     <div class="logo"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/></svg></div>
     <button class="ativo" title="Painel"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg></button>
-    <button title="Escanear baixados" onclick="acao('escanear')"><svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
+    <button title="Renomear Documentos (aplica a nomenclatura atual aos PDFs de uma pasta)" onclick="acao('escanear')"><svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
     <button title="Verificar validade agora (a mesma varredura automática, sob demanda)" onclick="verificarAgora()"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></button>
     <button title="Abrir pasta" onclick="acao('abrir_pasta')"><svg viewBox="0 0 24 24"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8L10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z"/></svg></button>
     <button title="Juntar PDFs" onclick="acao('juntar')"><svg viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></button>
@@ -497,12 +502,14 @@
   const IC_API='<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="6" rx="1"/><rect x="3" y="14" width="18" height="6" rx="1"/><path d="M7 7h.01M7 17h.01"/></svg>';
   const IC_COR='<svg viewBox="0 0 24 24"><path d="M12 2s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg>';
   const IC_PERFIL='<svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>';
+  const IC_NOME='<svg viewBox="0 0 24 24"><path d="M20.6 12 12.7 3.9a2 2 0 0 0-1.4-.6H5a2 2 0 0 0-2 2v6.3c0 .5.2 1 .6 1.4l7.9 7.9a2 2 0 0 0 2.8 0l6.3-6.3a2 2 0 0 0 0-2.8z"/><circle cx="7.5" cy="7.5" r="1.2" fill="currentColor" stroke="none"/></svg>';
   async function abrirConfig(){
     const c = await eel.carregar_config()(); _modo=c.modo;
     abrirModal(`<div class="cfg">
       <div class="cfg-side">
         <div class="tit">Configurações</div>
         <div class="cfg-tab on" data-tab="perfis" onclick="cfgTab('perfis')">${IC_PERFIL} Perfis</div>
+        <div class="cfg-tab" data-tab="nomes" onclick="cfgTab('nomes')">${IC_NOME} Nomenclatura dos Documentos</div>
         <div class="cfg-tab" data-tab="receita" onclick="cfgTab('receita')">${IC_DOC} Preferência de Download</div>
         <div class="cfg-tab" data-tab="api" onclick="cfgTab('api')">${IC_API} API Infosimples</div>
         <div class="cfg-tab" data-tab="aparencia" onclick="cfgTab('aparencia')">${IC_COR} Aparência</div>
@@ -510,6 +517,7 @@
       <div class="cfg-main">
         <button class="x" onclick="fecharModal()">✕</button>
         <div class="cfg-pane on" data-pane="perfis" id="pf-pane"></div>
+        <div class="cfg-pane" data-pane="nomes" id="nomes-pane"></div>
         <div class="cfg-pane" data-pane="receita">
           <div class="cfg-h">Preferência de Download <span class="wip">🚧 Em construção</span></div>
           <div class="cfg-sub">Como o programa baixa a Receita Federal (CND Federal e Cartão CNPJ). Vamos melhorar esta seção em breve.</div>
@@ -551,13 +559,16 @@
         <div class="cfg-foot"><button class="btn btn-primary" onclick="salvarConfig()">Salvar</button></div>
       </div></div>`, true);
     renderPerfis();
+    NOMES = await eel.listar_nomes()();
     document.querySelector('.cfg-foot').style.display='none';
   }
+  const _SEM_FOOT = ['perfis','nomes'];   // abas que salvam sozinhas (sem o rodapé "Salvar")
   function cfgTab(name){
     document.querySelectorAll('.cfg-tab').forEach(t=>t.classList.toggle('on', t.dataset.tab===name));
     document.querySelectorAll('.cfg-pane').forEach(p=>p.classList.toggle('on', p.dataset.pane===name));
-    const foot=document.querySelector('.cfg-foot'); if(foot) foot.style.display=(name==='perfis'?'none':'');
+    const foot=document.querySelector('.cfg-foot'); if(foot) foot.style.display=(_SEM_FOOT.includes(name)?'none':'');
     if(name==='perfis') renderPerfis();
+    if(name==='nomes') renderNomes();
   }
   function setModo(m){ _modo=m;
     document.getElementById('m-nav').classList.toggle('on', m==='navegador');
@@ -624,6 +635,50 @@
     delete PERFIS[nome];
     if(PERFIL_ATIVO===nome) PERFIL_ATIVO='Padrão';
     _pfEdit='Padrão'; renderPerfis(); reaplicar(); atualizaIndPerfil(); toast('Perfil excluído');
+  }
+
+  // ---- editor de nomenclatura dos documentos ----
+  let NOMES = [];
+  let _nomeSel = null;   // id do documento selecionado para editar
+  function renderNomes(){
+    const pane=document.getElementById('nomes-pane'); if(!pane) return;
+    if(!_nomeSel && NOMES.length) _nomeSel = NOMES[0].id;
+    const n = NOMES.find(x=>x.id===_nomeSel) || {label:'', atual:'', personalizado:false};
+    pane.innerHTML = `
+      <div class="cfg-h">Nomenclatura dos Documentos</div>
+      <div class="cfg-sub">Como cada certidão é nomeada no arquivo final. Clique num documento na lista, escreva o nome e salve.</div>
+      <div class="campo"><label>Nome para "${esc(n.label)}"</label>
+        <input class="pf-nome" id="nome-edit" placeholder="Nome do documento" value="${esc(n.atual)}">
+        <div class="pf-acoes">
+          <button class="btn btn-primary" onclick="salvarNomeDoc()">Salvar</button>
+          <button class="btn btn-outline" onclick="restaurarNomeDoc()">Restaurar padrão</button>
+        </div>
+      </div>
+      <div class="pf-docs">
+        ${NOMES.map(x=>`<div class="pf-row nm-row ${x.id===_nomeSel?'sel':''}" onclick="selecionarNomeDoc('${x.id}')">
+          <span class="pf-nm">${esc(x.label)}</span>
+          <span class="nm-atual" title="${esc(x.atual)}">${esc(x.atual)}</span>
+          ${x.personalizado?'<span class="nm-tag">personalizado</span>':''}
+        </div>`).join('')}
+      </div>`;
+  }
+  function selecionarNomeDoc(id){ _nomeSel=id; renderNomes(); }
+  function salvarNomeDoc(){
+    const valor=(document.getElementById('nome-edit').value||'').trim();
+    const n = NOMES.find(x=>x.id===_nomeSel); if(!n) return;
+    eel.salvar_nome_personalizado(_nomeSel, valor)();
+    n.atual = valor || n.padrao;
+    n.personalizado = !!valor;
+    renderNomes();
+    toast(valor ? `Nome de "${n.label}" atualizado` : `Nome de "${n.label}" restaurado ao padrão`);
+  }
+  function restaurarNomeDoc(){
+    const n = NOMES.find(x=>x.id===_nomeSel); if(!n) return;
+    eel.salvar_nome_personalizado(_nomeSel, '')();
+    n.atual = n.padrao;
+    n.personalizado = false;
+    renderNomes();
+    toast(`Nome de "${n.label}" restaurado ao padrão`);
   }
   const ACCENTS=['#3B82F6','#8B5CF6','#16A34A','#C8952E','#E8763C','#E5484D'];
   function setAccent(cor){

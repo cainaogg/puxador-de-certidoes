@@ -26,6 +26,9 @@ PADRAO = {
     # (some o badge, mas continua na lista) e já excluídas (some da lista).
     "notif_vistas": [],
     "notif_excluidas": [],
+    # Nomenclatura dos documentos: {id do módulo: nome personalizado}. Vazio ou
+    # ausente = usa o nome padrão do programa (nome_documento(modulo.nome)).
+    "nomes_personalizados": {},
 }
 
 

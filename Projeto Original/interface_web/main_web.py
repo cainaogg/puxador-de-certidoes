@@ -31,7 +31,7 @@ if not getattr(sys, "frozen", False):
 from certidoes import ajuda, config, paths  # noqa: E402
 from certidoes.base import (  # noqa: E402
     Status, _texto_pdf, documento_no_texto, identificar_certidao, juntar_pdfs,
-    nome_documento, nome_para_tipo, renomear_com_validade, so_letras_numeros,
+    nome_base_modulo, nome_documento, renomear_com_validade, so_letras_numeros,
     verificar_vencimentos,
 )
 from certidoes.documento import DocumentoInvalido, TipoDoc, detectar  # noqa: E402
@@ -198,6 +198,34 @@ def excluir_vencimento(chave):
 
 
 @eel.expose
+def listar_nomes():
+    """Nomenclatura dos documentos (Configurações): nome padrão do programa e o
+    personalizado (se houver) de cada certidão — para o editor na aba nova."""
+    personalizados = config.carregar().get("nomes_personalizados", {})
+    out = []
+    for m in REGISTRY:
+        padrao = nome_documento(m.nome)
+        custom = (personalizados.get(m.id) or "").strip()
+        out.append({"id": m.id, "label": ajuda.LABELS.get(m.id, m.nome),
+                    "padrao": padrao, "atual": custom or padrao,
+                    "personalizado": bool(custom)})
+    return out
+
+
+@eel.expose
+def salvar_nome_personalizado(mid, nome):
+    """Define o nome personalizado de um documento. Nome vazio remove a
+    personalização (volta a usar o padrão)."""
+    personalizados = dict(config.carregar().get("nomes_personalizados", {}))
+    nome = (nome or "").strip()
+    if nome:
+        personalizados[mid] = nome
+    else:
+        personalizados.pop(mid, None)
+    config.salvar(nomes_personalizados=personalizados)
+
+
+@eel.expose
 def escolher_pasta_processo():
     """Seletor de pasta (dentro de PASTA_BASE) para o botão "Atualizar processo":
     reconhece o CNPJ/CPF pelo nome da pasta, para refazer a busca desse documento.
@@ -288,7 +316,7 @@ def _id_por_nome(nome_arquivo: str):
     """Se o arquivo já começa com o nome de uma certidão conhecida, devolve o id."""
     for modulo in REGISTRY:
         for tipo in (TipoDoc.CNPJ, TipoDoc.CPF):
-            base = nome_documento(nome_para_tipo(modulo.nome, tipo))
+            base = nome_base_modulo(modulo, tipo)
             if base and nome_arquivo.startswith(base):
                 return modulo.id
     return None

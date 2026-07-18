@@ -390,13 +390,26 @@ def nome_para_tipo(nome: str, tipo: Optional[TipoDoc]) -> str:
     return nome
 
 
-def nome_arquivo_certidao(nome_modulo: str, validade: Optional[str],
-                          tipo: Optional[TipoDoc] = None) -> str:
-    """Monta o nome final: '<documento> val. <dd.mm.aaaa>.pdf' (ou só '<documento>.pdf').
+def nome_base_modulo(modulo, tipo: Optional[TipoDoc] = None) -> str:
+    """Nome-base do documento — usado para nomear o arquivo/pasta E para
+    reconhecer arquivos já baixados (já-válida, Renomear Documentos).
 
-    Se `tipo` for CPF, o token 'CNPJ' do nome vira 'CPF'.
-    """
-    base = _nome_arquivo_seguro(nome_documento(nome_para_tipo(nome_modulo, tipo)))
+    Usa o nome personalizado (Configurações > Nomenclatura dos Documentos) se o
+    usuário tiver definido um para este módulo; senão, o nome padrão do programa
+    (o nome do módulo sem o parêntese do órgão). Aplica a troca CNPJ->CPF em
+    ambos os casos (import tardio: config.py não depende de base.py, mas evita
+    qualquer ordem de import estranha na carga do pacote)."""
+    from . import config
+
+    personalizados = config.carregar().get("nomes_personalizados", {})
+    custom = (personalizados.get(modulo.id) or "").strip()
+    base = custom if custom else nome_documento(modulo.nome)
+    return nome_para_tipo(base, tipo)
+
+
+def nome_arquivo_certidao(nome_base: str, validade: Optional[str]) -> str:
+    """Monta o nome final: '<nome_base> val. <dd.mm.aaaa>.pdf' (ou só '.pdf')."""
+    base = _nome_arquivo_seguro(nome_base)
     return f"{base} val. {validade}.pdf" if validade else f"{base}.pdf"
 
 
@@ -419,7 +432,7 @@ def renomear_com_validade(caminho: Path, modulo, documento=None) -> Path:
             validade = (date.today() + timedelta(days=dias)).strftime("%d.%m.%Y")
 
     tipo = getattr(documento, "tipo", None)
-    nome = nome_arquivo_certidao(modulo.nome, validade, tipo)
+    nome = nome_arquivo_certidao(nome_base_modulo(modulo, tipo), validade)
     # Marca quando é POSITIVA (tem débito/pendência) — ex.: "Certidão Positiva com
     # Efeitos de Negativa". Assim dá pra ver de cara quem tem pendência.
     if re.search(r"CERTID[ÃA]O\s+POSITIVA", texto, re.IGNORECASE):
@@ -523,7 +536,7 @@ def certidao_valida_existente(pasta_base: Path, documento, modulo, margem_dias: 
     if not pasta_base.exists():
         return None
     numero = (documento_pasta or documento).formatado.replace("/", ".")
-    base_nome = nome_documento(nome_para_tipo(modulo.nome, getattr(documento, "tipo", None)))
+    base_nome = nome_base_modulo(modulo, getattr(documento, "tipo", None))
     if not base_nome:
         return None
     limite = date.today() + timedelta(days=margem_dias)

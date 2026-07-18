@@ -26,8 +26,7 @@ from .base import (
     documento_no_texto,
     identificar_certidao,
     juntar_pdfs,
-    nome_documento,
-    nome_para_tipo,
+    nome_base_modulo,
     renomear_com_validade,
     so_letras_numeros,
     verificar_vencimentos,
@@ -651,7 +650,7 @@ class App(ctk.CTk):
         """Se o arquivo já começa com o nome de uma certidão conhecida, devolve o id."""
         for modulo in REGISTRY:
             for tipo in (TipoDoc.CNPJ, TipoDoc.CPF):
-                base = nome_documento(nome_para_tipo(modulo.nome, tipo))
+                base = nome_base_modulo(modulo, tipo)
                 if base and nome_arquivo.startswith(base):
                     return modulo.id
         return None
