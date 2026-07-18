@@ -169,6 +169,20 @@ def emitir_e_capturar(page, ctx, modulo_id: str, nome: str, clicar, timeout: int
     page.on("download", _on_download)
     page.context.on("page", _on_page)
 
+    def _parar_de_escutar() -> None:
+        """Remove os listeners antes de sair. `page.context` é REAPROVEITADO entre
+        módulos (mesmo navegador para o lote inteiro/fila) — sem isso, um evento
+        tardio do site (ex.: popup/reload atrasado) cai num listener órfão e abre
+        uma aba que ninguém mais fecha, obrigando a fechar na mão."""
+        try:
+            page.remove_listener("download", _on_download)
+        except Exception:  # noqa: BLE001
+            pass
+        try:
+            page.context.remove_listener("page", _on_page)
+        except Exception:  # noqa: BLE001
+            pass
+
     def _fechar_novas() -> None:
         """Fecha as abas/popups que o site abriu (deixa só a página principal)."""
         for pg in list(novas):
@@ -178,62 +192,65 @@ def emitir_e_capturar(page, ctx, modulo_id: str, nome: str, clicar, timeout: int
             except Exception:  # noqa: BLE001
                 pass
 
-    clicar()
+    try:
+        clicar()
 
-    caminho = ctx.caminho_pdf(modulo_id)
-    fim = time.time() + timeout
-    while time.time() < fim:
-        # 1) Download capturado (na aba principal OU numa aba nova que baixou).
-        if "d" in baixados:
-            try:
-                baixados["d"].save_as(str(caminho))
-            except Exception as exc:  # noqa: BLE001
-                return Resultado(modulo_id, Status.ERRO,
-                                 f"Documento baixou, mas não consegui salvar: {exc}")
-            _fechar_novas()
-            ctx.log(f"{nome}: PDF baixado em {caminho.name}")
-            return Resultado(modulo_id, Status.OK, "Documento baixado.", caminho)
-
-        # 2) Certidão aberta numa aba viva.
-        for pg in list(novas):
-            try:
-                if pg.is_closed():
-                    continue
+        caminho = ctx.caminho_pdf(modulo_id)
+        fim = time.time() + timeout
+        while time.time() < fim:
+            # 1) Download capturado (na aba principal OU numa aba nova que baixou).
+            if "d" in baixados:
                 try:
-                    pg.wait_for_load_state("networkidle", timeout=8_000)
-                except Exception:  # noqa: BLE001
-                    pass
-                if "d" in baixados or pg.is_closed():  # virou download no meio
-                    break
-                # Se a aba É um PDF (visualizador do navegador — ex.: TJRS), baixa os
-                # bytes direto, usando a sessão/cookies do navegador. Senão (certidão
-                # em HTML — ex.: POA), imprime a página em PDF.
-                ctype = ""
-                try:
-                    ctype = (pg.evaluate("() => document.contentType") or "").lower()
-                except Exception:  # noqa: BLE001
-                    ctype = ""
-                if "pdf" in ctype or pg.url.lower().endswith(".pdf"):
-                    resp = pg.context.request.get(pg.url)
-                    caminho.parent.mkdir(parents=True, exist_ok=True)
-                    caminho.write_bytes(resp.body())
-                else:
-                    salvar_pagina_como_pdf(pg, caminho)
-            except Exception:  # noqa: BLE001 - aba pode fechar/virar download
-                continue
-            else:
+                    baixados["d"].save_as(str(caminho))
+                except Exception as exc:  # noqa: BLE001
+                    return Resultado(modulo_id, Status.ERRO,
+                                     f"Documento baixou, mas não consegui salvar: {exc}")
                 _fechar_novas()
-                ctx.log(f"{nome}: certidão salva em {caminho.name}")
-                return Resultado(modulo_id, Status.OK, "Documento salvo.", caminho)
+                ctx.log(f"{nome}: PDF baixado em {caminho.name}")
+                return Resultado(modulo_id, Status.OK, "Documento baixado.", caminho)
 
-        # Espera curta, resiliente ao fechamento da página original.
-        try:
-            page.wait_for_timeout(1_000)
-        except Exception:  # noqa: BLE001
-            time.sleep(1.0)
+            # 2) Certidão aberta numa aba viva.
+            for pg in list(novas):
+                try:
+                    if pg.is_closed():
+                        continue
+                    try:
+                        pg.wait_for_load_state("networkidle", timeout=8_000)
+                    except Exception:  # noqa: BLE001
+                        pass
+                    if "d" in baixados or pg.is_closed():  # virou download no meio
+                        break
+                    # Se a aba É um PDF (visualizador do navegador — ex.: TJRS), baixa
+                    # os bytes direto, usando a sessão/cookies do navegador. Senão
+                    # (certidão em HTML — ex.: POA), imprime a página em PDF.
+                    ctype = ""
+                    try:
+                        ctype = (pg.evaluate("() => document.contentType") or "").lower()
+                    except Exception:  # noqa: BLE001
+                        ctype = ""
+                    if "pdf" in ctype or pg.url.lower().endswith(".pdf"):
+                        resp = pg.context.request.get(pg.url)
+                        caminho.parent.mkdir(parents=True, exist_ok=True)
+                        caminho.write_bytes(resp.body())
+                    else:
+                        salvar_pagina_como_pdf(pg, caminho)
+                except Exception:  # noqa: BLE001 - aba pode fechar/virar download
+                    continue
+                else:
+                    _fechar_novas()
+                    ctx.log(f"{nome}: certidão salva em {caminho.name}")
+                    return Resultado(modulo_id, Status.OK, "Documento salvo.", caminho)
 
-    return Resultado(modulo_id, Status.ERRO,
-                     "Não obtive o documento após Confirmar. Veja o print.")
+            # Espera curta, resiliente ao fechamento da página original.
+            try:
+                page.wait_for_timeout(1_000)
+            except Exception:  # noqa: BLE001
+                time.sleep(1.0)
+
+        return Resultado(modulo_id, Status.ERRO,
+                         "Não obtive o documento após Confirmar. Veja o print.")
+    finally:
+        _parar_de_escutar()
 
 
 # Prazo de validade (em dias) usado SÓ como fallback quando a validade não está

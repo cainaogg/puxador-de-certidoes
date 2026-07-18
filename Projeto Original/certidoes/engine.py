@@ -247,6 +247,14 @@ def executar_lote(
             on_status(modulo.id, Status.EXECUTANDO)
             eh_api = getattr(modulo, "usa_api", False)
             page = None if eh_api else context.new_page()
+            if page is not None:
+                try:
+                    # Sem foco, o Chromium trata a aba como "em segundo plano" e
+                    # desacelera seus timers/navegação — só andava de verdade se o
+                    # usuário clicasse na janela. Traz para frente logo ao criar.
+                    page.bring_to_front()
+                except Exception:  # noqa: BLE001
+                    pass
 
             def aguardar_captcha(msg: str, _mid=modulo.id) -> None:
                 on_status(_mid, Status.AGUARDANDO_CAPTCHA)
