@@ -400,6 +400,10 @@
   }
   function acao(nome){ eel.acao(nome)(); }
   async function atualizarProcesso(){
+    if(document.getElementById('btn-buscar').disabled){
+      addLog('⚠ Já tem uma busca em andamento — aguarde terminar antes de atualizar outro processo.');
+      return;
+    }
     const r = await eel.escolher_pasta_processo()();
     if(!r || !r.ok){
       if(r && r.erro) addLog('⚠ '+r.erro);

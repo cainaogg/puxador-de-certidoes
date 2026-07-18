@@ -61,6 +61,7 @@ _ST = {
 _cancel = threading.Event()
 _fila: list = []
 _lock = threading.Lock()
+_rodando = threading.Lock()  # trava contra 2 lotes simultâneos (2 navegadores abertos)
 
 
 def _emit(evt: dict) -> None:
@@ -214,6 +215,13 @@ def iniciar(texto: str, ids) -> None:
     if not modulos:
         _emit({"t": "log", "m": "⚠ Selecione ao menos uma certidão."})
         _emit({"t": "fim"})
+        return
+    if not _rodando.acquire(blocking=False):
+        # Já tem um lote rodando (ex.: clique duplo, ou "Atualizar processo" clicado
+        # durante uma busca). Sem isso, dois navegadores abririam ao mesmo tempo.
+        # NÃO emite "fim": o lote em andamento ainda vai terminar e emitir o dele —
+        # emitir aqui reabilitaria o botão Buscar antes da hora.
+        _emit({"t": "log", "m": "⚠ Já tem uma busca em andamento — aguarde terminar."})
         return
     _cancel.clear()
     threading.Thread(target=_rodar, args=(entries, modulos), daemon=True).start()
@@ -383,6 +391,7 @@ def _rodar(entries, modulos) -> None:
     except Exception as exc:  # noqa: BLE001
         _emit({"t": "log", "m": f"Erro geral: {type(exc).__name__}: {exc}"})
     finally:
+        _rodando.release()
         _emit({"t": "fim"})
 
 
