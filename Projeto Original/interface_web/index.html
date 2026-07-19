@@ -165,6 +165,15 @@
   .cfg-h{font-family:'Manrope',sans-serif;font-weight:800;font-size:17px;margin:0 0 4px;display:flex;align-items:center}
   .cfg-sub{color:var(--subtext);font-size:13px;margin-bottom:16px;line-height:1.6}
   .cfg-foot{margin-top:18px;padding-top:16px;border-top:1px solid var(--border)}
+  /* Agrupa funções diferentes dentro de uma mesma aba (ex.: Preferência de Download) */
+  .cfg-sect{margin-top:0;padding-top:0;border-top:none}
+  .cfg-sect + .cfg-sect{margin-top:22px;padding-top:20px;border-top:1px solid var(--border)}
+  .cfg-subh{font-family:'Manrope',sans-serif;font-weight:700;font-size:13px;text-transform:uppercase;
+    letter-spacing:.04em;color:var(--accent);margin:0 0 10px}
+  .campo input[type=text],.campo input[type=password]{width:100%;box-sizing:border-box;
+    background:var(--inputBg);border:1px solid var(--border);border-radius:10px;
+    color:var(--text);font-size:13px;padding:10px 12px}
+  .campo input[readonly]{color:var(--subtext);cursor:default}
   .wip{font-size:11px;font-weight:700;color:#e0b341;background:rgba(224,179,65,.14);border:1px solid rgba(224,179,65,.4);padding:2px 9px;border-radius:999px;margin-left:10px}
   .apibox{background:var(--panelAlt);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:13px;line-height:1.65;color:var(--text)}
   .apibox ol{margin:8px 0 0;padding-left:18px} .apibox li{margin:5px 0}
@@ -582,21 +591,29 @@
         <div class="cfg-pane" data-pane="nomes" id="nomes-pane"></div>
         <div class="cfg-pane" data-pane="receita">
           <div class="cfg-h">Preferência de Download <span class="wip">🚧 Em construção</span></div>
-          <div class="cfg-sub">Como o programa baixa a Receita Federal (CND Federal e Cartão CNPJ). Vamos melhorar esta seção em breve.</div>
-          <div class="campo"><label>Como emitir a Receita Federal</label>
-            <div class="seg">
-              <button id="m-nav" class="${c.modo==='navegador'?'on':''}" onclick="setModo('navegador')">Abrir no meu navegador</button>
-              <button id="m-api" class="${c.modo==='api'?'on':''}" onclick="setModo('api')">Baixar pela API</button>
-            </div></div>
-          <div class="cfg-sub"><b>Abrir no navegador</b> (padrão): a Receita bloqueia automação, então o programa abre o site e você resolve o captcha. <b>Baixar pela API</b>: usa a Infosimples (pago) — configure o token na aba <b>API Infosimples</b>.</div>
-          <div class="campo" style="margin-top:18px"><label>Pasta onde o navegador salva os downloads</label>
-            <input type="text" id="cfg-pasta-downloads" value="${esc(c.pasta_downloads)}" readonly style="width:100%;box-sizing:border-box">
+          <div class="cfg-sub">Duas coisas separadas: como a Receita Federal é emitida, e onde o programa procura o que você baixa manualmente.</div>
+
+          <div class="cfg-sect">
+            <div class="cfg-subh">Emissão da Receita Federal</div>
+            <div class="campo"><label>Como emitir a Receita Federal</label>
+              <div class="seg">
+                <button id="m-nav" class="${c.modo==='navegador'?'on':''}" onclick="setModo('navegador')">Abrir no meu navegador</button>
+                <button id="m-api" class="${c.modo==='api'?'on':''}" onclick="setModo('api')">Baixar pela API</button>
+              </div></div>
+            <div class="cfg-sub" style="margin-bottom:0"><b>Abrir no navegador</b> (padrão): a Receita bloqueia automação, então o programa abre o site e você resolve o captcha. <b>Baixar pela API</b>: usa a Infosimples (pago) — configure o token na aba <b>API Infosimples</b>.</div>
           </div>
-          <div style="display:flex;gap:8px">
-            <button class="btn btn-outline" onclick="escolherPastaDownloads()">Escolher pasta…</button>
-            <button class="btn btn-outline" id="btn-restaurar-pasta" onclick="restaurarPastaDownloads()" ${c.pasta_downloads_custom?'':'disabled'}>Restaurar padrão</button>
+
+          <div class="cfg-sect">
+            <div class="cfg-subh">Pasta de downloads do navegador</div>
+            <div class="campo"><label>Onde o navegador salva os downloads</label>
+              <input type="text" id="cfg-pasta-downloads" value="${esc(c.pasta_downloads)}" readonly>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-outline" onclick="escolherPastaDownloads()">Escolher pasta…</button>
+              <button class="btn btn-outline" id="btn-restaurar-pasta" onclick="restaurarPastaDownloads()" ${c.pasta_downloads_custom?'':'disabled'}>Restaurar padrão</button>
+            </div>
+            <div class="cfg-sub" style="margin-top:12px;margin-bottom:0">É aqui que o programa procura os PDFs que você baixa manualmente (Receita, Cartão CNPJ, Consulta Consolidada TCU) pra mover e renomear sozinho. Por padrão é a pasta <b>Downloads</b> do Windows — só troque se o seu navegador estiver configurado para salvar em outro lugar.</div>
           </div>
-          <div class="cfg-sub">É aqui que o programa procura os PDFs que você baixa manualmente (Receita, Cartão CNPJ, Consulta Consolidada TCU) pra mover e renomear sozinho. Por padrão é a pasta <b>Downloads</b> do Windows — só troque se o seu navegador estiver configurado para salvar em outro lugar.</div>
         </div>
         <div class="cfg-pane" data-pane="api">
           <div class="cfg-h">API Infosimples <span class="wip">🚧 Em construção</span></div>
