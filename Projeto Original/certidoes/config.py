@@ -9,9 +9,12 @@ from . import paths
 ARQUIVO = paths.base_dados() / "config.json"
 
 PADRAO = {
-    # Como emitir a Receita Federal: "navegador" (abre o seu navegador para emitir
-    # manualmente) ou "api" (baixa automaticamente pela API da Infosimples).
+    # Como emitir a Receita Federal, o Cartão CNPJ e a Consulta Consolidada (TCU):
+    # "navegador" (abre o seu navegador para emitir manualmente) ou "api" (baixa
+    # automaticamente pela API da Infosimples — precisa do token).
     "receita_modo": "navegador",
+    "consulta_cnpj_modo": "navegador",
+    "tcu_consolidada_modo": "navegador",
     "infosimples_token": "",
     # Cor de destaque da interface nova (webview). Um dos 6 hex do seletor.
     "accent": "#3B82F6",

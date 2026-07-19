@@ -29,9 +29,10 @@ CERTIDOES = {
         "site e você resolve o captcha de imagem na janela.",
     "tcu_consolidada_pj":
         "Consulta Consolidada de Pessoa Jurídica (TCU): relatório único que reúne TCU, CNJ "
-        "e Portal da Transparência (CEIS/CNEP). Só para CNPJ. Abre no seu navegador para "
-        "você consultar e baixar — o firewall desse serviço do TCU bloqueia qualquer "
-        "navegador automatizado.",
+        "e Portal da Transparência (CEIS/CNEP). Só para CNPJ. Nesta versão, por padrão o "
+        "programa abre o site no seu navegador para você consultar e baixar — o firewall "
+        "desse serviço do TCU bloqueia qualquer navegador automatizado. Nas Configurações "
+        "dá para trocar para a API da Infosimples (paga).",
     "sefaz_rs":
         "CND Estadual do RS (SEFAZ-RS): certidão de situação fiscal junto ao estado do Rio "
         "Grande do Sul — de CNPJ ou CPF. Sai do site da SEFAZ (resolve o ALTCHA sozinho). "
@@ -59,9 +60,11 @@ CERTIDOES = {
         "registrado). Documento cadastral (não tem data de validade). Sai do site da "
         "prefeitura.",
     "consulta_cnpj":
-        "Consulta CNPJ (gov.br): abre o site oficial (cnpjreva) no seu navegador para você "
-        "resolver o captcha e baixar o cartão CNPJ — é a fonte oficial e bloqueia automação. "
-        "O nome da empresa usado nas pastas vem, à parte, de uma consulta gratuita automática.",
+        "Consulta CNPJ (gov.br): nesta versão, por padrão o programa abre o site oficial "
+        "(cnpjreva) no seu navegador para você resolver o captcha e baixar o cartão CNPJ "
+        "— é a fonte oficial e bloqueia automação. Nas Configurações dá para trocar para a "
+        "API da Infosimples (paga). O nome da empresa usado nas pastas vem, à parte, de uma "
+        "consulta gratuita automática.",
 }
 
 # Nome curto exibido na LISTA (o órgão e os detalhes ficam no "?"/CERTIDOES).

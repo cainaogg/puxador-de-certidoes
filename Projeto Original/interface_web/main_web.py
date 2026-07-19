@@ -95,6 +95,8 @@ def carregar_config():
     c = config.carregar()
     custom = (c.get("pasta_downloads_navegador") or "").strip()
     return {"modo": c.get("receita_modo", "navegador"),
+            "modo_cnpj": c.get("consulta_cnpj_modo", "navegador"),
+            "modo_tcu": c.get("tcu_consolidada_modo", "navegador"),
             "token": c.get("infosimples_token", ""),
             "accent": c.get("accent", "#3B82F6"),
             "tema": c.get("tema", "dark"),
@@ -103,8 +105,9 @@ def carregar_config():
 
 
 @eel.expose
-def salvar_config(modo, token):
-    config.salvar(receita_modo=modo, infosimples_token=(token or "").strip())
+def salvar_config(modo, modo_cnpj, modo_tcu, token):
+    config.salvar(receita_modo=modo, consulta_cnpj_modo=modo_cnpj,
+                  tcu_consolidada_modo=modo_tcu, infosimples_token=(token or "").strip())
 
 
 @eel.expose

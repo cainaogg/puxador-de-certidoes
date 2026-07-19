@@ -568,14 +568,14 @@
       <p>${esc(t)}</p>
       <button class="btn btn-primary" style="margin-top:16px" onclick="fecharModal()">Fechar</button>`);
   }
-  let _modo='navegador';
+  let _modo='navegador', _modoCnpj='navegador', _modoTcu='navegador';
   const IC_DOC='<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>';
   const IC_API='<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="6" rx="1"/><rect x="3" y="14" width="18" height="6" rx="1"/><path d="M7 7h.01M7 17h.01"/></svg>';
   const IC_COR='<svg viewBox="0 0 24 24"><path d="M12 2s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg>';
   const IC_PERFIL='<svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>';
   const IC_NOME='<svg viewBox="0 0 24 24"><path d="M20.6 12 12.7 3.9a2 2 0 0 0-1.4-.6H5a2 2 0 0 0-2 2v6.3c0 .5.2 1 .6 1.4l7.9 7.9a2 2 0 0 0 2.8 0l6.3-6.3a2 2 0 0 0 0-2.8z"/><circle cx="7.5" cy="7.5" r="1.2" fill="currentColor" stroke="none"/></svg>';
   async function abrirConfig(){
-    const c = await eel.carregar_config()(); _modo=c.modo;
+    const c = await eel.carregar_config()(); _modo=c.modo; _modoCnpj=c.modo_cnpj; _modoTcu=c.modo_tcu;
     abrirModal(`<div class="cfg">
       <div class="cfg-side">
         <div class="tit">Configurações</div>
@@ -591,7 +591,7 @@
         <div class="cfg-pane" data-pane="nomes" id="nomes-pane"></div>
         <div class="cfg-pane" data-pane="receita">
           <div class="cfg-h">Preferência de Download</div>
-          <div class="cfg-sub">Duas coisas separadas: como a Receita Federal é emitida, e onde o programa procura o que você baixa manualmente.</div>
+          <div class="cfg-sub">Como cada certidão manual é emitida, e onde o programa procura o que você baixa.</div>
 
           <div class="cfg-sect">
             <div class="cfg-subh">Emissão da Receita Federal</div>
@@ -601,6 +601,26 @@
                 <button id="m-api" class="${c.modo==='api'?'on':''}" onclick="setModo('api')">Baixar pela API</button>
               </div></div>
             <div class="cfg-sub" style="margin-bottom:0"><b>Abrir no navegador</b> (padrão): a Receita bloqueia automação, então o programa abre o site e você resolve o captcha. <b>Baixar pela API</b> <span class="wip">🚧 Em construção</span>: usa a Infosimples (pago) — configure o token na aba <b>API Infosimples</b>.</div>
+          </div>
+
+          <div class="cfg-sect">
+            <div class="cfg-subh">Emissão do Cartão CNPJ</div>
+            <div class="campo"><label>Como emitir o Cartão CNPJ</label>
+              <div class="seg">
+                <button id="m-cnpj-nav" class="${c.modo_cnpj==='navegador'?'on':''}" onclick="setModoCnpj('navegador')">Abrir no meu navegador</button>
+                <button id="m-cnpj-api" class="${c.modo_cnpj==='api'?'on':''}" onclick="setModoCnpj('api')">Baixar pela API</button>
+              </div></div>
+            <div class="cfg-sub" style="margin-bottom:0"><b>Abrir no navegador</b> (padrão): o cnpjreva exige captcha, então o programa abre o site e você resolve. <b>Baixar pela API</b> <span class="wip">🚧 Em construção</span>: usa a Infosimples (pago) — configure o token na aba <b>API Infosimples</b>.</div>
+          </div>
+
+          <div class="cfg-sect">
+            <div class="cfg-subh">Emissão da Consulta Consolidada (TCU)</div>
+            <div class="campo"><label>Como emitir a Consulta Consolidada</label>
+              <div class="seg">
+                <button id="m-tcu-nav" class="${c.modo_tcu==='navegador'?'on':''}" onclick="setModoTcu('navegador')">Abrir no meu navegador</button>
+                <button id="m-tcu-api" class="${c.modo_tcu==='api'?'on':''}" onclick="setModoTcu('api')">Baixar pela API</button>
+              </div></div>
+            <div class="cfg-sub" style="margin-bottom:0"><b>Abrir no navegador</b> (padrão): o firewall desse serviço do TCU bloqueia navegador automatizado, então o programa abre no seu. <b>Baixar pela API</b> <span class="wip">🚧 Em construção</span>: usa a Infosimples (pago) — configure o token na aba <b>API Infosimples</b>.</div>
           </div>
 
           <div class="cfg-sect">
@@ -660,10 +680,16 @@
   function setModo(m){ _modo=m;
     document.getElementById('m-nav').classList.toggle('on', m==='navegador');
     document.getElementById('m-api').classList.toggle('on', m==='api'); }
+  function setModoCnpj(m){ _modoCnpj=m;
+    document.getElementById('m-cnpj-nav').classList.toggle('on', m==='navegador');
+    document.getElementById('m-cnpj-api').classList.toggle('on', m==='api'); }
+  function setModoTcu(m){ _modoTcu=m;
+    document.getElementById('m-tcu-nav').classList.toggle('on', m==='navegador');
+    document.getElementById('m-tcu-api').classList.toggle('on', m==='api'); }
   function setTema(t){ aplicaTema(t); eel.salvar_tema(t)();
     const cl=document.getElementById('t-claro'), es=document.getElementById('t-escuro');
     if(cl) cl.classList.toggle('on', t==='light'); if(es) es.classList.toggle('on', t!=='light'); }
-  function salvarConfig(){ eel.salvar_config(_modo, document.getElementById('cfg-token').value)(); fecharModal(); }
+  function salvarConfig(){ eel.salvar_config(_modo, _modoCnpj, _modoTcu, document.getElementById('cfg-token').value)(); fecharModal(); }
   async function escolherPastaDownloads(){
     const r = await eel.escolher_pasta_downloads_navegador()();
     if(!r) return;  // cancelou o seletor
