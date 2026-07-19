@@ -330,14 +330,18 @@ def abrir_link(url):
 
 
 @eel.expose
-def iniciar(texto: str, ids) -> None:
+def iniciar(texto: str, ids_cnpj, ids_cpf) -> None:
     entries = _parse(texto or "")
-    modulos = [por_id(i) for i in ids if por_id(i).implementado]
+    # Listas separadas por tipo: o perfil ativo pode marcar a mesma certidão só
+    # para CNPJ (ou só para CPF) — rodar tudo numa lista única ignorava isso e
+    # emitia certidões pra um tipo de documento que o perfil não pedia.
+    mods_cnpj = [por_id(i) for i in (ids_cnpj or []) if por_id(i).implementado]
+    mods_cpf = [por_id(i) for i in (ids_cpf or []) if por_id(i).implementado]
     if not entries:
         _emit({"t": "log", "m": "⚠ Informe ao menos um CPF ou CNPJ válido."})
         _emit({"t": "fim"})
         return
-    if not modulos:
+    if not mods_cnpj and not mods_cpf:
         _emit({"t": "log", "m": "⚠ Selecione ao menos uma certidão."})
         _emit({"t": "fim"})
         return
@@ -349,7 +353,7 @@ def iniciar(texto: str, ids) -> None:
         _emit({"t": "log", "m": "⚠ Já tem uma busca em andamento — aguarde terminar."})
         return
     _cancel.clear()
-    threading.Thread(target=_rodar, args=(entries, modulos), daemon=True).start()
+    threading.Thread(target=_rodar, args=(entries, mods_cnpj, mods_cpf), daemon=True).start()
 
 
 @eel.expose
@@ -437,7 +441,11 @@ def _juntar() -> None:
 
 
 # ---- execução (thread) ----------------------------------------------------
-def _rodar(entries, modulos) -> None:
+def _rodar(entries, mods_cnpj, mods_cpf) -> None:
+    # União: pra zerar o status ("pendente"/"não aplicável") de toda linha
+    # marcada, mesmo a que só vale pro outro tipo de documento desta mesma busca.
+    modulos = list({m.id: m for m in (mods_cnpj + mods_cpf)}.values())
+
     def on_log(msg: str) -> None:
         _emit({"t": "log", "m": msg})
 
@@ -464,7 +472,8 @@ def _rodar(entries, modulos) -> None:
                 _emit({"t": "log", "m": "Cancelado pelo usuário."})
                 break
             _emit({"t": "log", "m": f"\n===== {doc.formatado} ====="})
-            aplic = [m for m in modulos if m.aplica_para(doc.tipo)]
+            modulos_do_tipo = mods_cnpj if doc.tipo is TipoDoc.CNPJ else mods_cpf
+            aplic = [m for m in modulos_do_tipo if m.aplica_para(doc.tipo)]
             for m in modulos:
                 chave = "pendente" if m in aplic else "nao_aplicavel"
                 _emit({"t": "status", "id": m.id, "st": chave})

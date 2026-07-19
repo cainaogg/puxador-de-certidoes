@@ -514,14 +514,21 @@
     document.getElementById('dh-ind').textContent=d.classList.contains('aberta')?'▾ ocultar':'▸ mostrar';
   }
   function buscar(){
-    const ids=checks().filter(x=>x.checked).map(x=>x.dataset.id);
+    const marcadas = checks().filter(x=>x.checked).map(x=>x.dataset.id);
+    // O perfil ativo pode marcar o mesmo item só para CNPJ (não para CPF, ou
+    // vice-versa) — o checkbox por linha não guarda essa distinção sozinho, então
+    // recalculamos aqui quais ids valem para cada tipo. Item marcado manualmente
+    // fora do perfil (não consta em nenhuma das duas listas) vale para os dois,
+    // como sempre valeu.
+    const ids_cnpj = marcadas.filter(id => noPerfil(id,'CNPJ') || !(noPerfil(id,'CNPJ')||noPerfil(id,'CPF')));
+    const ids_cpf  = marcadas.filter(id => noPerfil(id,'CPF')  || !(noPerfil(id,'CNPJ')||noPerfil(id,'CPF')));
     const texto=document.getElementById('docs').value;
-    if(!ids.length){addLog('⚠ Selecione ao menos uma certidão.');return}
+    if(!marcadas.length){addLog('⚠ Selecione ao menos uma certidão.');return}
     if(!document.getElementById('drawer').classList.contains('aberta'))toggleDrawer();
     document.getElementById('btn-buscar').disabled=true;
     document.getElementById('btn-cancelar').disabled=false;
     document.getElementById('s-ok').textContent=0;
-    eel.iniciar(texto, ids)();
+    eel.iniciar(texto, ids_cnpj, ids_cpf)();
   }
   function acao(nome){ eel.acao(nome)(); }
   async function atualizarProcesso(){
