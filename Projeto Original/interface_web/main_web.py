@@ -93,15 +93,34 @@ def texto_ajuda():
 @eel.expose
 def carregar_config():
     c = config.carregar()
+    custom = (c.get("pasta_downloads_navegador") or "").strip()
     return {"modo": c.get("receita_modo", "navegador"),
             "token": c.get("infosimples_token", ""),
             "accent": c.get("accent", "#3B82F6"),
-            "tema": c.get("tema", "dark")}
+            "tema": c.get("tema", "dark"),
+            "pasta_downloads": str(custom or _pasta_downloads_padrao()),
+            "pasta_downloads_custom": bool(custom)}
 
 
 @eel.expose
 def salvar_config(modo, token):
     config.salvar(receita_modo=modo, infosimples_token=(token or "").strip())
+
+
+@eel.expose
+def escolher_pasta_downloads_navegador():
+    escolhida = _pedir_pasta("Pasta onde seu navegador salva os downloads",
+                              inicial=_pasta_downloads_navegador())
+    if not escolhida:
+        return None
+    config.salvar(pasta_downloads_navegador=escolhida)
+    return {"caminho": escolhida, "custom": True}
+
+
+@eel.expose
+def restaurar_pasta_downloads_navegador():
+    config.salvar(pasta_downloads_navegador="")
+    return {"caminho": str(_pasta_downloads_padrao()), "custom": False}
 
 
 @eel.expose
@@ -381,13 +400,26 @@ def acao(nome: str) -> None:
 
 
 # ---- utilitários (Escanear / Validade / Juntar) — mesma lógica do app.py ---
-def _pedir_pasta(titulo: str):
+def _pedir_pasta(titulo: str, inicial=None):
     root = tk.Tk()
     root.withdraw()
     root.attributes("-topmost", True)
-    caminho = filedialog.askdirectory(title=titulo, initialdir=str(PASTA_BASE))
+    caminho = filedialog.askdirectory(title=titulo, initialdir=str(inicial or PASTA_BASE))
     root.destroy()
     return caminho
+
+
+def _pasta_downloads_padrao() -> Path:
+    return Path.home() / "Downloads"
+
+
+def _pasta_downloads_navegador() -> Path:
+    """Pasta onde o programa procura os PDFs baixados manualmente (Receita, Cartão
+    CNPJ, Consulta Consolidada TCU) — a Downloads do Windows, ou a que o usuário
+    escolheu em Configurações › Preferência de Download, se o navegador dele
+    salvar em outro lugar."""
+    custom = (config.carregar().get("pasta_downloads_navegador") or "").strip()
+    return Path(custom) if custom else _pasta_downloads_padrao()
 
 
 def _id_por_nome(nome_arquivo: str):
@@ -587,7 +619,7 @@ def _importar_downloads(pendencias: list, lock: threading.Lock,
     a sessão termina (`sessao_ativa` limpo), ainda dá mais 3 min de tolerância
     antes de desistir do que sobrou — dá tempo de terminar algo que ainda estava
     em aberto (ex.: a Consulta Consolidada do TCU, que demora no site deles)."""
-    downloads = Path.home() / "Downloads"
+    downloads = _pasta_downloads_navegador()
     if not downloads.exists():
         return
     vistos: set = set()

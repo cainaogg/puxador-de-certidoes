@@ -33,6 +33,10 @@ PADRAO = {
     # imediatamente, se o usuário pediu "Reiniciar"): {"caminho", "versao",
     # "relancar"}. None = nenhuma atualização pendente.
     "atualizacao_pendente": None,
+    # Pasta onde o navegador salva os downloads (documentos manuais: Receita,
+    # Cartão CNPJ, Consulta Consolidada TCU). Vazio = usa a Downloads padrão do
+    # Windows; só é preenchido se o usuário escolher outra em Configurações.
+    "pasta_downloads_navegador": "",
 }
 
 

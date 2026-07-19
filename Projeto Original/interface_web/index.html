@@ -589,6 +589,14 @@
               <button id="m-api" class="${c.modo==='api'?'on':''}" onclick="setModo('api')">Baixar pela API</button>
             </div></div>
           <div class="cfg-sub"><b>Abrir no navegador</b> (padrão): a Receita bloqueia automação, então o programa abre o site e você resolve o captcha. <b>Baixar pela API</b>: usa a Infosimples (pago) — configure o token na aba <b>API Infosimples</b>.</div>
+          <div class="campo" style="margin-top:18px"><label>Pasta onde o navegador salva os downloads</label>
+            <input type="text" id="cfg-pasta-downloads" value="${esc(c.pasta_downloads)}" readonly style="width:100%;box-sizing:border-box">
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-outline" onclick="escolherPastaDownloads()">Escolher pasta…</button>
+            <button class="btn btn-outline" id="btn-restaurar-pasta" onclick="restaurarPastaDownloads()" ${c.pasta_downloads_custom?'':'disabled'}>Restaurar padrão</button>
+          </div>
+          <div class="cfg-sub">É aqui que o programa procura os PDFs que você baixa manualmente (Receita, Cartão CNPJ, Consulta Consolidada TCU) pra mover e renomear sozinho. Por padrão é a pasta <b>Downloads</b> do Windows — só troque se o seu navegador estiver configurado para salvar em outro lugar.</div>
         </div>
         <div class="cfg-pane" data-pane="api">
           <div class="cfg-h">API Infosimples <span class="wip">🚧 Em construção</span></div>
@@ -639,6 +647,19 @@
     const cl=document.getElementById('t-claro'), es=document.getElementById('t-escuro');
     if(cl) cl.classList.toggle('on', t==='light'); if(es) es.classList.toggle('on', t!=='light'); }
   function salvarConfig(){ eel.salvar_config(_modo, document.getElementById('cfg-token').value)(); fecharModal(); }
+  async function escolherPastaDownloads(){
+    const r = await eel.escolher_pasta_downloads_navegador()();
+    if(!r) return;  // cancelou o seletor
+    document.getElementById('cfg-pasta-downloads').value = r.caminho;
+    document.getElementById('btn-restaurar-pasta').disabled = !r.custom;
+    toast('Pasta de downloads atualizada');
+  }
+  async function restaurarPastaDownloads(){
+    const r = await eel.restaurar_pasta_downloads_navegador()();
+    document.getElementById('cfg-pasta-downloads').value = r.caminho;
+    document.getElementById('btn-restaurar-pasta').disabled = true;
+    toast('Pasta de downloads restaurada ao padrão');
+  }
 
   // ---- editor de perfis ----
   let _pfEdit = 'Padrão';   // qual perfil está aberto no editor
