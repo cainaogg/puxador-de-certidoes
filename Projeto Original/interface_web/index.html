@@ -309,15 +309,18 @@
     document.getElementById('s-disp').textContent = CERTS.filter(c=>c.impl).length;
     setInterval(poll, 150);   // consulta a fila de updates do Python
     checarVencimentos();
+    eel.verificar_atualizacao()();   // dispara em background; resultado chega pela fila (poll)
   }
   let VENCIMENTOS = [];
+  let ATUALIZACAO = null;       // {versao, notas, url_release, asset_url, asset_nome, asset_tamanho}
+  let _updateVista = false;     // some do contador ao abrir o sino; o item continua na lista
   async function checarVencimentos(){
     try{ VENCIMENTOS = await eel.resumo_vencimentos(15)(); }catch(e){ return; }
     atualizaBadge();
     renderBell();
   }
   function atualizaBadge(){
-    const n = VENCIMENTOS.filter(v=>v.nova).length;
+    const n = VENCIMENTOS.filter(v=>v.nova).length + (ATUALIZACAO && !_updateVista ? 1 : 0);
     const badge = document.getElementById('bell-badge');
     badge.textContent = n;
     badge.classList.toggle('mostra', n>0);
@@ -327,28 +330,44 @@
     if(v.restam<=7) return {marca:`faltam ${v.restam}d`, cor:'var(--manual)'};
     return {marca:`faltam ${v.restam}d`, cor:'var(--ok)'};
   }
+  function renderUpdateItem(){
+    return `<div class="bell-item">
+      <div class="bell-row">
+        <span class="venc-tag" style="background:var(--accent)22;color:var(--accent)">nova versão</span>
+        <span class="vemp">Puxador de Certidões v${esc(ATUALIZACAO.versao)} disponível</span>
+        ${!_updateVista?'<span class="bell-dot" title="novo"></span>':''}
+      </div>
+      <div class="bell-detalhe" style="display:block">
+        <div>Baixe e reinicie para atualizar.${ATUALIZACAO.url_release?` <a href="#" onclick="event.preventDefault();eel.abrir_link('${esc(ATUALIZACAO.url_release)}')()">Ver o que mudou</a>`:''}</div>
+        <button class="btn btn-primary" id="btn-baixar-update" onclick="iniciarDownloadAtualizacao()" style="margin-top:8px;width:100%">⬇ Atualizar</button>
+        <div id="update-progresso" style="display:none;margin-top:8px;font-size:12.5px;color:var(--subtext)"></div>
+      </div>
+    </div>`;
+  }
   function renderBell(){
     const lista = document.getElementById('bell-list');
+    let html = ATUALIZACAO ? renderUpdateItem() : '';
     if(!VENCIMENTOS.length){
-      lista.innerHTML = '<div class="bell-empty">Nada vencido ou a vencer nos próximos 15 dias.</div>';
-      return;
+      html += '<div class="bell-empty">Nada vencido ou a vencer nos próximos 15 dias.</div>';
+    } else {
+      html += VENCIMENTOS.map((v,i)=>{
+        const {marca,cor} = vencTagInfo(v);
+        return `<div class="bell-item">
+          <div class="bell-row" onclick="toggleDetalheNotif(${i})">
+            <span class="venc-tag" style="background:${cor}22;color:${cor}">${marca}</span>
+            <span class="vemp" title="${esc(v.empresa)} — ${esc(v.arquivo)}">${esc(v.empresa)} — ${esc(v.arquivo)}</span>
+            ${v.nova?'<span class="bell-dot" title="novo"></span>':''}
+          </div>
+          <div class="bell-detalhe" id="bell-det-${i}" style="display:none">
+            <div><b>Empresa/Pessoa:</b> ${esc(v.empresa)}</div>
+            <div><b>Documento:</b> ${esc(v.arquivo)}</div>
+            <div><b>Vencimento:</b> ${v.data} (${marca})</div>
+            <button class="bell-del" onclick="event.stopPropagation(); excluirNotif('${i}')">🗑 Excluir notificação</button>
+          </div>
+        </div>`;
+      }).join('');
     }
-    lista.innerHTML = VENCIMENTOS.map((v,i)=>{
-      const {marca,cor} = vencTagInfo(v);
-      return `<div class="bell-item">
-        <div class="bell-row" onclick="toggleDetalheNotif(${i})">
-          <span class="venc-tag" style="background:${cor}22;color:${cor}">${marca}</span>
-          <span class="vemp" title="${esc(v.empresa)} — ${esc(v.arquivo)}">${esc(v.empresa)} — ${esc(v.arquivo)}</span>
-          ${v.nova?'<span class="bell-dot" title="novo"></span>':''}
-        </div>
-        <div class="bell-detalhe" id="bell-det-${i}" style="display:none">
-          <div><b>Empresa/Pessoa:</b> ${esc(v.empresa)}</div>
-          <div><b>Documento:</b> ${esc(v.arquivo)}</div>
-          <div><b>Vencimento:</b> ${v.data} (${marca})</div>
-          <button class="bell-del" onclick="event.stopPropagation(); excluirNotif('${i}')">🗑 Excluir notificação</button>
-        </div>
-      </div>`;
-    }).join('');
+    lista.innerHTML = html;
   }
   function toggleDetalheNotif(i){
     const el = document.getElementById('bell-det-'+i);
@@ -361,8 +380,9 @@
       const chaves = VENCIMENTOS.map(v=>v.chave);
       eel.marcar_vencimentos_vistos(chaves)();
       VENCIMENTOS.forEach(v=>v.nova=false);
-      atualizaBadge();
     }
+    if(ATUALIZACAO) _updateVista = true;
+    atualizaBadge();
   }
   function toggleBell(){
     const painel = document.getElementById('bell-panel');
@@ -385,6 +405,29 @@
     atualizaBadge();
     renderBell();
   }
+  function iniciarDownloadAtualizacao(){
+    const btn = document.getElementById('btn-baixar-update');
+    const prog = document.getElementById('update-progresso');
+    if(btn) btn.disabled = true;
+    if(prog){ prog.style.display='block'; prog.textContent = 'Baixando… 0%'; }
+    eel.baixar_atualizacao(ATUALIZACAO)();
+  }
+  function mostrarDialogoAtualizacaoPronta(versao){
+    abrirModal(`<h3>Atualização pronta</h3>
+      <p>O download da versão ${esc(versao)} foi concluído. Reinicie agora para atualizar, ou
+      continue usando — ela é aplicada sozinha na próxima vez que você fechar o programa.</p>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button class="btn btn-primary" style="flex:1" onclick="reiniciarParaAtualizar()">Reiniciar</button>
+        <button class="btn btn-outline" style="flex:1" onclick="fecharModal()">Cancelar</button>
+      </div>`);
+  }
+  function reiniciarParaAtualizar(){
+    eel.marcar_relancar_apos_fechar()();
+    fecharModal();
+    window.close();
+    // Rede de segurança: alguns navegadores restringem window.close() em modo-app.
+    setTimeout(()=>{ eel.forcar_saida()(); }, 1200);
+  }
   document.addEventListener('click', (e)=>{
     const wrap = document.querySelector('.bell-wrap');
     const painel = document.getElementById('bell-panel');
@@ -400,6 +443,18 @@
       if(u.t==='log') addLog(u.m, u.cor);
       else if(u.t==='status') setStatus(u.id, u.st);
       else if(u.t==='fim') finalizar();
+      else if(u.t==='update_disponivel'){ ATUALIZACAO = u; atualizaBadge(); renderBell(); }
+      else if(u.t==='update_progresso'){
+        const prog = document.getElementById('update-progresso');
+        if(prog) prog.textContent = `Baixando… ${u.pct}%`;
+      }
+      else if(u.t==='update_pronto') mostrarDialogoAtualizacaoPronta(u.versao);
+      else if(u.t==='update_erro'){
+        const prog = document.getElementById('update-progresso');
+        if(prog) prog.textContent = 'Falha ao baixar: ' + u.m;
+        const btn = document.getElementById('btn-baixar-update');
+        if(btn) btn.disabled = false;
+      }
     });
   }
   function render(){

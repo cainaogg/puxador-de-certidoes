@@ -29,6 +29,10 @@ PADRAO = {
     # Nomenclatura dos documentos: {id do módulo: nome personalizado}. Vazio ou
     # ausente = usa o nome padrão do programa (nome_documento(modulo.nome)).
     "nomes_personalizados": {},
+    # Atualização já baixada, aguardando ser aplicada ao fechar o programa (ou
+    # imediatamente, se o usuário pediu "Reiniciar"): {"caminho", "versao",
+    # "relancar"}. None = nenhuma atualização pendente.
+    "atualizacao_pendente": None,
 }
 
 

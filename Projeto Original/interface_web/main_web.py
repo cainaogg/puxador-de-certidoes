@@ -32,7 +32,7 @@ from playwright.sync_api import sync_playwright
 if not getattr(sys, "frozen", False):
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from certidoes import ajuda, config, paths  # noqa: E402
+from certidoes import ajuda, atualizacao, config, paths  # noqa: E402
 from certidoes.base import (  # noqa: E402
     Status, _texto_pdf, documento_no_texto, identificar_certidao, juntar_pdfs,
     nome_base_modulo, nome_documento, renomear_com_validade, so_letras_numeros,
@@ -199,6 +199,74 @@ def excluir_vencimento(chave):
     excluidas = set(config.carregar().get("notif_excluidas", []))
     excluidas.add(chave)
     config.salvar(notif_excluidas=list(excluidas))
+
+
+# --- Atualização do programa (sino) ---------------------------------------
+@eel.expose
+def verificar_atualizacao():
+    """Checa o último release do GitHub em background — uma chamada de rede não
+    pode travar a thread principal do eel (sem monkey-patch, ela bloqueia tudo).
+    O resultado (se houver versão nova) chega pela fila de eventos (poll)."""
+    def trabalho():
+        info = atualizacao.verificar()
+        if info:
+            _emit({"t": "update_disponivel", **info})
+    threading.Thread(target=trabalho, daemon=True).start()
+
+
+@eel.expose
+def baixar_atualizacao(info):
+    """Baixa o .exe do release em background e avisa o progresso/fim pela fila."""
+    def trabalho():
+        try:
+            def progresso(pct):
+                _emit({"t": "update_progresso", "pct": pct})
+            caminho = atualizacao.baixar(info["asset_url"], info.get("asset_tamanho", 0),
+                                          on_progresso=progresso)
+            config.salvar(atualizacao_pendente={
+                "caminho": str(caminho), "versao": info.get("versao", ""), "relancar": False,
+            })
+            _emit({"t": "update_pronto", "versao": info.get("versao", "")})
+        except Exception as exc:  # noqa: BLE001
+            _emit({"t": "update_erro", "m": str(exc)})
+    threading.Thread(target=trabalho, daemon=True).start()
+
+
+@eel.expose
+def marcar_relancar_apos_fechar():
+    """Chamado pelo botão "Reiniciar" do aviso de atualização: marca para reabrir
+    assim que a janela fechar (ver `_ao_fechar`, chamado por eel via close_callback)."""
+    pendente = config.carregar().get("atualizacao_pendente")
+    if pendente:
+        pendente["relancar"] = True
+        config.salvar(atualizacao_pendente=pendente)
+
+
+@eel.expose
+def forcar_saida():
+    """Rede de segurança: se `window.close()` não fechar a janela (alguns
+    navegadores restringem em modo-app), o JS chama isto para sair na força."""
+    _aplicar_atualizacao_pendente()
+    os._exit(0)
+
+
+def _aplicar_atualizacao_pendente() -> None:
+    pendente = config.carregar().get("atualizacao_pendente")
+    if not pendente:
+        return
+    if Path(pendente["caminho"]).exists():
+        atualizacao.agendar_substituicao(Path(pendente["caminho"]), pendente.get("relancar", False))
+    config.salvar(atualizacao_pendente=None)
+
+
+def _ao_fechar(page, sockets) -> None:
+    """close_callback do eel: dispara quando uma janela/websocket fecha. Sem
+    outras janelas abertas (`sockets` vazio), é o fechamento de verdade —
+    aplica a atualização pendente (se houver) e encerra o processo."""
+    if sockets:
+        return
+    _aplicar_atualizacao_pendente()
+    os._exit(0)
 
 
 @eel.expose
@@ -558,7 +626,8 @@ def _parse(texto: str):
 
 def main() -> None:
     eel.init(str(WEB))
-    eel.start("index.html", mode="edge", size=(980, 680), port=0, block=True)
+    eel.start("index.html", mode="edge", size=(980, 680), port=0, block=True,
+              close_callback=_ao_fechar)
 
 
 if __name__ == "__main__":

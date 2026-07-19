@@ -1,3 +1,5 @@
 """Baixador automático de certidões por CPF/CNPJ."""
 
-__version__ = "0.1.0"
+# Mantenha sincronizado com a tag do release (CHANGELOG.md / GitHub) — é o que
+# o verificador de atualização (certidoes/atualizacao.py) compara.
+__version__ = "2.3.0"
