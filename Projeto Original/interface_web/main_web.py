@@ -1,5 +1,9 @@
 """Nova interface (Edge modo-app via eel) do Puxador de Certidões.
 
+Copyright (C) 2026 Cainã Gomes Süffert
+Licenciado sob a GNU Affero General Public License v3.0 (ou, à sua escolha,
+qualquer versão posterior). Veja o arquivo LICENSE na raiz do repositório.
+
 Renderiza `index.html` numa janela do Edge/Chrome do sistema (modo app, sem barra
 do navegador) e liga os botões ao MOTOR já existente (engine/base/registry), sem
 tocar no app.py (CustomTkinter). O JS consulta uma fila (`poll`) a cada ~150ms —

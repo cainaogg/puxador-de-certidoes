@@ -3,6 +3,7 @@
 ![Windows](https://img.shields.io/badge/plataforma-Windows-0078D6)
 ![Python](https://img.shields.io/badge/Python-3.14%2B-3776AB)
 ![Release](https://img.shields.io/github/v/release/cainaogg/puxador-de-certidoes)
+![Licença](https://img.shields.io/github/license/cainaogg/puxador-de-certidoes)
 
 Aplicativo desktop (Windows) que baixa, **de uma vez**, as certidões de um ou mais
 CNPJ/CPF — renomeando cada arquivo com a data de validade e organizando por
@@ -146,6 +147,16 @@ baixou). O `Gerar executavel.bat` da raiz ainda gera a interface clássica.
   funciona sem nenhuma chave.
 - Usa o **Edge/Chrome do sistema** para navegar; o Chromium do Playwright é só
   reserva.
+
+## 📜 Licença
+
+Este projeto é licenciado sob a **[GNU AGPL v3.0](LICENSE)**. Resumindo (isto não
+substitui o texto oficial): você pode usar, estudar, forkar e modificar o código
+livremente, inclusive para fins comerciais. A contrapartida é o *copyleft*: se
+você distribuir uma versão modificada — ou rodá-la como serviço acessível pela
+rede, como um SaaS — precisa disponibilizar o código-fonte dessa versão sob a
+mesma licença. Ou seja: dá para construir em cima, mas não para fechar o código e
+vender como produto proprietário.
 
 ## 👤 Autoria
 
