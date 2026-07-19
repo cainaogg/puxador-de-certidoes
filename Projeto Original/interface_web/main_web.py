@@ -466,7 +466,24 @@ def _rodar(entries, mods_cnpj, mods_cpf) -> None:
             donos.append(ultimo_cnpj if ultimo_cnpj is not None else d)
 
     inicio_sessao = time.time()
-    pendencias = []  # (modulo_id, número, pasta destino) p/ importar da Downloads
+    # Vigia a pasta Downloads durante toda a sessão (não só no final): documentos
+    # manuais (Receita, Cartão CNPJ, Consulta Consolidada TCU) são importados assim
+    # que você baixar, mesmo enquanto o resto do lote ainda está rodando. Continua
+    # de vigia por mais 3 min depois da sessão acabar (ver sessao_ativa.clear() no
+    # finally), pra dar tempo de terminar o que ainda estava em aberto.
+    pendencias: list = []  # (modulo_id, número, pasta destino) p/ importar da Downloads
+    pendencias_lock = threading.Lock()
+    sessao_ativa = threading.Event()
+    sessao_ativa.set()
+
+    def registrar_pendencia(modulo_id: str, numero: str, pasta) -> None:
+        with pendencias_lock:
+            pendencias.append((modulo_id, numero, pasta))
+
+    threading.Thread(target=_importar_downloads,
+                      args=(pendencias, pendencias_lock, sessao_ativa, inicio_sessao),
+                      daemon=True).start()
+
     fila_manual = []  # (doc, nasc, nome, dono, [módulos sempre-manuais desta linha])
     try:
         for i, (doc, nasc, nome) in enumerate(entries):
@@ -493,24 +510,22 @@ def _rodar(entries, mods_cnpj, mods_cpf) -> None:
                 grupo = _pasta_do_grupo(PASTA_BASE, donos[i])
                 for r in resultados:
                     if r.status is Status.MANUAL:
-                        pendencias.append((r.modulo_id, doc.numero, grupo))
+                        registrar_pendencia(r.modulo_id, doc.numero, grupo)
 
         if fila_manual and not _cancel.is_set():
             _emit({"t": "log", "m": "\n===== Fila de emissão manual (uma vez, no final) ====="})
-            pendencias += _rodar_fila_manual(fila_manual, on_log, on_status)
+            _rodar_fila_manual(fila_manual, on_log, on_status, registrar_pendencia)
 
         _emit({"t": "log", "m": "\nConcluído."})
-        if pendencias and not _cancel.is_set():
-            threading.Thread(target=_importar_downloads,
-                             args=(pendencias, inicio_sessao), daemon=True).start()
     except Exception as exc:  # noqa: BLE001
         _emit({"t": "log", "m": f"Erro geral: {type(exc).__name__}: {exc}"})
     finally:
         _rodando.release()
+        sessao_ativa.clear()  # sessão acabou: o importador ganha mais 3 min de tolerância
         _emit({"t": "fim"})
 
 
-def _rodar_fila_manual(fila, on_log, on_status):
+def _rodar_fila_manual(fila, on_log, on_status, registrar_pendencia):
     """Processa, de uma vez só no final do lote, as certidões que sempre exigem o
     usuário — em vez de interromper espalhado ao longo da execução.
 
@@ -518,9 +533,8 @@ def _rodar_fila_manual(fila, on_log, on_status):
     sistema e não esperam nada — disparam todas juntas, ficam "cozinhando"
     enquanto o resto roda). Depois o CEIS/CGU (exige resolver um captcha de imagens por vez),
     num único navegador reaproveitado entre as empresas, para não abrir/fechar
-    um a cada uma."""
-    pendencias = []
-
+    um a cada uma. `registrar_pendencia(modulo_id, numero, pasta)` alimenta o
+    importador da pasta Downloads, que já está de vigia desde o início da sessão."""
     for doc, nasc, nome, dono, mods in fila:
         if _cancel.is_set():
             break
@@ -533,7 +547,7 @@ def _rodar_fila_manual(fila, on_log, on_status):
         grupo = _pasta_do_grupo(PASTA_BASE, dono)
         for r in resultados:
             if r.status is Status.MANUAL:
-                pendencias.append((r.modulo_id, doc.numero, grupo))
+                registrar_pendencia(r.modulo_id, doc.numero, grupo)
 
     pendentes_cgu = [(doc, nasc, nome, dono) for doc, nasc, nome, dono, mods in fila
                      if any(m.id == "cgu_correcional" for m in mods)]
@@ -553,67 +567,95 @@ def _rodar_fila_manual(fila, on_log, on_status):
                     grupo = _pasta_do_grupo(PASTA_BASE, dono)
                     for r in resultados:
                         if r.status is Status.MANUAL:
-                            pendencias.append((r.modulo_id, doc.numero, grupo))
+                            registrar_pendencia(r.modulo_id, doc.numero, grupo)
             finally:
                 try:
                     contexto.close()
                 except Exception:  # noqa: BLE001
                     pass
-    return pendencias
 
 
-def _importar_downloads(pendencias, inicio_sessao: float) -> None:
-    """Move da Downloads os documentos manuais da Receita desta sessão (mesma lógica
-    do app.py): recentes + reconhecidos + CNPJ/CPF batendo. Para ao achar tudo (~3 min)."""
+def _importar_downloads(pendencias: list, lock: threading.Lock,
+                         sessao_ativa: threading.Event, inicio_sessao: float) -> None:
+    """Vigia a pasta Downloads durante toda a sessão — reconhece um documento
+    manual (Receita, Cartão CNPJ, Consulta Consolidada TCU) pelo CONTEÚDO do PDF
+    assim que ele aparece, move pra pasta certa e renomeia com a validade, sem
+    esperar o resto do lote terminar.
+
+    `pendencias` cresce ao vivo (outra thread chama `registrar_pendencia`, que
+    tranca com `lock`); some da lista assim que o arquivo é importado. Depois que
+    a sessão termina (`sessao_ativa` limpo), ainda dá mais 3 min de tolerância
+    antes de desistir do que sobrou — dá tempo de terminar algo que ainda estava
+    em aberto (ex.: a Consulta Consolidada do TCU, que demora no site deles)."""
     downloads = Path.home() / "Downloads"
     if not downloads.exists():
         return
-    restantes = list(pendencias)
     vistos: set = set()
-    fim = time.time() + 180
-    _emit({"t": "log", "m": "Aguardando os documentos manuais na pasta Downloads (movo automaticamente)…"})
-    while restantes and time.time() < fim and not _cancel.is_set():
-        try:
-            pdfs = sorted(downloads.glob("*.pdf"), key=lambda p: p.stat().st_mtime, reverse=True)
-        except Exception:  # noqa: BLE001
-            pdfs = []
-        for pdf in pdfs:
-            if pdf in vistos:
-                continue
-            try:
-                if pdf.stat().st_mtime < inicio_sessao:
-                    vistos.add(pdf)
-                    continue
-            except Exception:  # noqa: BLE001
-                continue
-            try:
-                texto = _texto_pdf(pdf)
-            except Exception:  # noqa: BLE001
-                continue  # talvez ainda baixando
-            vistos.add(pdf)
-            mid = identificar_certidao(texto)
-            if not mid:
-                continue
-            # Casa por ALFANUMÉRICO (maiúsculas): robusto a CNPJ com espaços e ao
-            # CNPJ alfanumérico (novo formato). pnum já vem limpo de documento.py.
-            alnum = re.sub(r"[^0-9A-Za-z]", "", texto).upper()
-            for pend in list(restantes):
-                pmid, pnum, pasta = pend
-                if mid == pmid and pnum in alnum:
-                    try:
-                        pasta.mkdir(parents=True, exist_ok=True)
-                        destino = pasta / pdf.name
-                        shutil.move(str(pdf), str(destino))
-                        novo = renomear_com_validade(destino, por_id(mid), detectar(pnum))
-                        _emit({"t": "log", "m": f"Importei da Downloads: {novo.name}  →  {pasta.parent.name}"})
-                    except Exception as exc:  # noqa: BLE001
-                        _emit({"t": "log", "m": f"Não consegui importar {pdf.name}: {exc}"})
-                    restantes.remove(pend)
-                    break
+    avisou = False
+    fim_graca = None
+    while not _cancel.is_set():
+        with lock:
+            restantes = list(pendencias)
         if restantes:
-            time.sleep(3)
-    if restantes:
-        nomes = sorted({por_id(p[0]).nome for p in restantes})
+            if not avisou:
+                _emit({"t": "log", "m": "Vigiando a pasta Downloads — assim que você baixar um "
+                                        "documento manual, eu movo e renomeio sozinho…"})
+                avisou = True
+            try:
+                pdfs = sorted(downloads.glob("*.pdf"), key=lambda p: p.stat().st_mtime, reverse=True)
+            except Exception:  # noqa: BLE001
+                pdfs = []
+            for pdf in pdfs:
+                if pdf in vistos:
+                    continue
+                try:
+                    if pdf.stat().st_mtime < inicio_sessao:
+                        vistos.add(pdf)
+                        continue
+                except Exception:  # noqa: BLE001
+                    continue
+                try:
+                    texto = _texto_pdf(pdf)
+                except Exception:  # noqa: BLE001
+                    continue  # talvez ainda baixando
+                vistos.add(pdf)
+                mid = identificar_certidao(texto)
+                if not mid:
+                    continue
+                # Casa por ALFANUMÉRICO (maiúsculas): robusto a CNPJ com espaços e ao
+                # CNPJ alfanumérico (novo formato). pnum já vem limpo de documento.py.
+                alnum = re.sub(r"[^0-9A-Za-z]", "", texto).upper()
+                with lock:
+                    candidatos = list(pendencias)
+                for pend in candidatos:
+                    pmid, pnum, pasta = pend
+                    if mid == pmid and pnum in alnum:
+                        try:
+                            pasta.mkdir(parents=True, exist_ok=True)
+                            destino = pasta / pdf.name
+                            shutil.move(str(pdf), str(destino))
+                            novo = renomear_com_validade(destino, por_id(mid), detectar(pnum))
+                            _emit({"t": "log", "m": f"Importei da Downloads: {novo.name}  →  {pasta.parent.name}"})
+                        except Exception as exc:  # noqa: BLE001
+                            _emit({"t": "log", "m": f"Não consegui importar {pdf.name}: {exc}"})
+                        with lock:
+                            if pend in pendencias:
+                                pendencias.remove(pend)
+                        break
+
+        if not sessao_ativa.is_set():
+            if fim_graca is None:
+                fim_graca = time.time() + 180
+            with lock:
+                sobrou = bool(pendencias)
+            if not sobrou or time.time() >= fim_graca:
+                break
+        time.sleep(3)
+
+    with lock:
+        sobrando = list(pendencias)
+    if sobrando:
+        nomes = sorted({por_id(p[0]).nome for p in sobrando})
         _emit({"t": "log", "m": "Importador: ainda não achei na Downloads: " + "; ".join(nomes)})
 
 
