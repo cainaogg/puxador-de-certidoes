@@ -714,7 +714,7 @@ def _parse(texto: str):
 
 def main() -> None:
     eel.init(str(WEB))
-    eel.start("index.html", mode="edge", size=(980, 680), port=0, block=True,
+    eel.start("index.html", mode="edge", size=(1080, 760), port=0, block=True,
               close_callback=_ao_fechar)
 
 

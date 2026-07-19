@@ -4,6 +4,8 @@ Conforme as Configurações (config.consulta_cnpj_modo):
   - "navegador": abre o cnpjreva oficial no SEU navegador para você baixar
     manualmente (o site bloqueia automação — exige captcha).
   - "api": baixa automaticamente pela API da Infosimples (precisa do token).
+    Endpoint "receita-federal/cnpj" confirmado na documentação oficial da
+    Infosimples (2026-07); ainda sem uma consulta paga real para validar.
 """
 
 from __future__ import annotations

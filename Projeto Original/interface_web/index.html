@@ -132,7 +132,7 @@
     font-size:12px;line-height:1.7;color:#c8d2e0;white-space:pre-wrap}
   /* ---------- modais ---------- */
   .overlay{position:fixed;inset:0;background:rgba(20,25,35,.45);display:none;
-    align-items:center;justify-content:center;z-index:50}
+    align-items:center;justify-content:center;z-index:60}
   .overlay.aberto{display:flex}
   .modal{background:var(--panel);border:1px solid var(--border);border-radius:16px;
     width:440px;max-height:82vh;overflow-y:auto;box-shadow:0 20px 50px rgba(20,25,35,.4);padding:22px}
@@ -151,7 +151,7 @@
   .swatch.on{outline:2px solid var(--text);outline-offset:2px}
   /* Configurações com abas laterais */
   .modal.wide{width:min(800px,95vw);max-height:90vh;padding:0;overflow:hidden}
-  .cfg{display:flex;height:600px}
+  .cfg{display:flex;height:min(600px,78vh)}
   .cfg-side{width:196px;flex:none;background:var(--panelAlt);border-right:1px solid var(--border);padding:16px 12px;display:flex;flex-direction:column;gap:4px}
   .cfg-side .tit{font-family:'Manrope',sans-serif;font-weight:800;font-size:16px;padding:2px 8px 12px}
   .cfg-tab{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:9px;cursor:pointer;color:var(--subtext);font-size:13px;font-weight:600}
@@ -600,7 +600,7 @@
                 <button id="m-nav" class="${c.modo==='navegador'?'on':''}" onclick="setModo('navegador')">Abrir no meu navegador</button>
                 <button id="m-api" class="${c.modo==='api'?'on':''}" onclick="setModo('api')">Baixar pela API</button>
               </div></div>
-            <div class="cfg-sub" style="margin-bottom:0"><b>Abrir no navegador</b> (padrão): a Receita bloqueia automação, então o programa abre o site e você resolve o captcha. <b>Baixar pela API</b> <span class="wip">🚧 Em construção</span>: usa a Infosimples (pago) — configure o token na aba <b>API Infosimples</b>.</div>
+            <div class="cfg-sub" style="margin-bottom:0"><b>Abrir no navegador</b> (padrão): a Receita bloqueia automação, então o programa abre o site e você resolve o captcha. <b>Baixar pela API</b> <span class="wip">🧪 Aguardando teste real</span>: usa a Infosimples (pago) — configure o token na aba <b>API Infosimples</b>.</div>
           </div>
 
           <div class="cfg-sect">
@@ -610,7 +610,7 @@
                 <button id="m-cnpj-nav" class="${c.modo_cnpj==='navegador'?'on':''}" onclick="setModoCnpj('navegador')">Abrir no meu navegador</button>
                 <button id="m-cnpj-api" class="${c.modo_cnpj==='api'?'on':''}" onclick="setModoCnpj('api')">Baixar pela API</button>
               </div></div>
-            <div class="cfg-sub" style="margin-bottom:0"><b>Abrir no navegador</b> (padrão): o cnpjreva exige captcha, então o programa abre o site e você resolve. <b>Baixar pela API</b> <span class="wip">🚧 Em construção</span>: usa a Infosimples (pago) — configure o token na aba <b>API Infosimples</b>.</div>
+            <div class="cfg-sub" style="margin-bottom:0"><b>Abrir no navegador</b> (padrão): o cnpjreva exige captcha, então o programa abre o site e você resolve. <b>Baixar pela API</b> <span class="wip">🧪 Aguardando teste real</span>: usa a Infosimples (pago) — configure o token na aba <b>API Infosimples</b>.</div>
           </div>
 
           <div class="cfg-sect">
@@ -620,7 +620,7 @@
                 <button id="m-tcu-nav" class="${c.modo_tcu==='navegador'?'on':''}" onclick="setModoTcu('navegador')">Abrir no meu navegador</button>
                 <button id="m-tcu-api" class="${c.modo_tcu==='api'?'on':''}" onclick="setModoTcu('api')">Baixar pela API</button>
               </div></div>
-            <div class="cfg-sub" style="margin-bottom:0"><b>Abrir no navegador</b> (padrão): o firewall desse serviço do TCU bloqueia navegador automatizado, então o programa abre no seu. <b>Baixar pela API</b> <span class="wip">🚧 Em construção</span>: usa a Infosimples (pago) — configure o token na aba <b>API Infosimples</b>.</div>
+            <div class="cfg-sub" style="margin-bottom:0"><b>Abrir no navegador</b> (padrão): o firewall desse serviço do TCU bloqueia navegador automatizado, então o programa abre no seu. <b>Baixar pela API</b> <span class="wip">🧪 Aguardando teste real</span>: usa a Infosimples (pago) — configure o token na aba <b>API Infosimples</b>.</div>
           </div>
 
           <div class="cfg-sect">
