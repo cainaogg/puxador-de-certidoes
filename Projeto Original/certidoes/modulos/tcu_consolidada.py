@@ -11,8 +11,8 @@ Conforme as Configurações (config.tcu_consolidada_modo):
     um navegador automatizado.
   - "api": baixa automaticamente pela API da Infosimples (precisa do token) —
     também contorna o WAF, já que a consulta não passa pelo nosso navegador.
-    Endpoint "tcu/consolidada-pj" confirmado na documentação oficial da
-    Infosimples (2026-07); ainda sem uma consulta paga real para validar.
+    Endpoint "tcu/consolidada-pj" testado com consulta paga real (2026-07):
+    devolveu o PDF original corretamente.
 """
 
 from __future__ import annotations

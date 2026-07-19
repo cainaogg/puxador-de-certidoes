@@ -45,12 +45,39 @@ def consultar(endpoint: str, *, timeout_api: int = 600, **params) -> dict:
 
 
 def baixar_recibo(resposta: dict, caminho: Path) -> bool:
+    """Baixa o `site_receipts` (comprovante) da API para `caminho`.
+
+    A Infosimples às vezes devolve o PDF original da fonte, mas às vezes
+    "sintetiza" um recibo em HTML no lugar (quando o arquivo emitido pela fonte
+    não é adequado pra visualização — ver documentação). Detecta pelo conteúdo
+    (não pela URL) e converte o HTML pra PDF de verdade, senão salvaríamos HTML
+    com extensão .pdf — abre errado em qualquer leitor."""
     recibos = resposta.get("site_receipts") or []
     if not recibos:
         return False
     caminho.parent.mkdir(parents=True, exist_ok=True)
-    urllib.request.urlretrieve(recibos[0], str(caminho))
+    with urllib.request.urlopen(recibos[0], timeout=60) as resp:
+        dados = resp.read()
+    if dados[:5] == b"%PDF-":
+        caminho.write_bytes(dados)
+    else:
+        _html_para_pdf(dados.decode("utf-8", "replace"), caminho)
     return True
+
+
+def _html_para_pdf(html: str, caminho: Path) -> None:
+    """Converte um HTML (recibo sintetizado) num PDF de verdade, via Chromium
+    headless — só para essa conversão pontual, não abre nenhum site."""
+    from playwright.sync_api import sync_playwright
+
+    with sync_playwright() as pw:
+        navegador = pw.chromium.launch()
+        try:
+            page = navegador.new_page()
+            page.set_content(html, wait_until="networkidle")
+            page.pdf(path=str(caminho), format="A4", print_background=True)
+        finally:
+            navegador.close()
 
 
 def primeiro_dado(resposta: dict) -> Optional[dict]:
