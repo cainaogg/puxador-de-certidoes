@@ -47,9 +47,11 @@ from certidoes.registry import REGISTRY, por_id  # noqa: E402
 PASTA_BASE = paths.base_dados() / "downloads"
 
 # Certidões que SEMPRE exigem o usuário (nenhuma tentativa automática — a Receita
-# e a CGU bloqueiam automação/só têm hCaptcha Enterprise). Em vez de interromper
-# o lote espalhado, ficam para uma fila única no final (ver _rodar_fila_manual).
-SEMPRE_MANUAL = {"receita_federal", "consulta_cnpj", "cgu_correcional"}
+# e a CGU bloqueiam automação/só têm hCaptcha Enterprise; a Consolidada do TCU
+# tem um WAF que bloqueia qualquer navegador automatizado, mesmo com perfil
+# "envelhecido" — testado). Em vez de interromper o lote espalhado, ficam para
+# uma fila única no final (ver _rodar_fila_manual).
+SEMPRE_MANUAL = {"receita_federal", "consulta_cnpj", "cgu_correcional", "tcu_consolidada_pj"}
 # Pasta da UI: no .exe (onefile) fica em _MEIPASS/interface_web; no código, aqui.
 WEB = (Path(getattr(sys, "_MEIPASS", "")) / "interface_web"
        if getattr(sys, "frozen", False) else Path(__file__).resolve().parent)
@@ -512,9 +514,9 @@ def _rodar_fila_manual(fila, on_log, on_status):
     """Processa, de uma vez só no final do lote, as certidões que sempre exigem o
     usuário — em vez de interromper espalhado ao longo da execução.
 
-    Primeiro a Receita/Cartão CNPJ (abrem aba no navegador do sistema e não
-    esperam nada — disparam todas juntas, ficam "cozinhando" enquanto o resto
-    roda). Depois o CEIS/CGU (exige resolver um captcha de imagens por vez),
+    Primeiro Receita/Cartão CNPJ/TCU Consolidada (abrem aba no navegador do
+    sistema e não esperam nada — disparam todas juntas, ficam "cozinhando"
+    enquanto o resto roda). Depois o CEIS/CGU (exige resolver um captcha de imagens por vez),
     num único navegador reaproveitado entre as empresas, para não abrir/fechar
     um a cada uma."""
     pendencias = []

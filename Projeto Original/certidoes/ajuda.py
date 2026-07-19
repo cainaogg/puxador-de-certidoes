@@ -29,7 +29,9 @@ CERTIDOES = {
         "site e você resolve o captcha de imagem na janela.",
     "tcu_consolidada_pj":
         "Consulta Consolidada de Pessoa Jurídica (TCU): relatório único que reúne TCU, CNJ "
-        "e Portal da Transparência (CEIS/CNEP). Só para CNPJ; sai do site do TCU.",
+        "e Portal da Transparência (CEIS/CNEP). Só para CNPJ. Abre no seu navegador para "
+        "você consultar e baixar — o firewall desse serviço do TCU bloqueia qualquer "
+        "navegador automatizado.",
     "sefaz_rs":
         "CND Estadual do RS (SEFAZ-RS): certidão de situação fiscal junto ao estado do Rio "
         "Grande do Sul — de CNPJ ou CPF. Sai do site da SEFAZ (resolve o ALTCHA sozinho). "
