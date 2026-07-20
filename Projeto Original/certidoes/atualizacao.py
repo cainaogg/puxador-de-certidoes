@@ -107,6 +107,7 @@ def agendar_substituicao(novo_exe: Path, relancar: bool) -> None:
     # (ex.: desistir após 5 min e avisar o usuário via um arquivo de log).
     bat.write_text(
         "@echo off\n"
+        "chcp 65001 >nul\n"
         ":espera\n"
         f'tasklist /FI "PID eq {pid}" 2>nul | find "{pid}" >nul\n'
         "if not errorlevel 1 (\n"
@@ -121,7 +122,12 @@ def agendar_substituicao(novo_exe: Path, relancar: bool) -> None:
         ")\n"
         + (f'start "" "{atual}"\n' if relancar else "")
         + 'rmdir /s /q "%~dp0" 2>nul\n',
-        encoding="utf-8",
+        # utf-8-sig (com BOM): o Windows 10/11 detecta o BOM e interpreta o .bat
+        # como UTF-8, senão os bytes de "õ"/"ã"/"ç" viram lixo na página de
+        # código padrão do sistema — quebra qualquer caminho com acento (ex.:
+        # a pasta padrão "Puxador de Certidões" já tem um). chcp 65001 na
+        # primeira linha é reforço, cobrindo comandos que dependam do console.
+        encoding="utf-8-sig",
     )
     subprocess.Popen(
         ["cmd", "/c", str(bat)],
