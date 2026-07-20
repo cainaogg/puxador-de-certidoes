@@ -262,13 +262,25 @@
       <div class="icg"><span class="glyph"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></span><span class="nm">Verificar validade</span></div>
       <div class="icg"><span class="glyph"><svg viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></span><span class="nm">Juntar PDFs</span></div>
       <div class="icg"><span class="glyph"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg></span><span class="nm">Atualizar processo</span></div>
+      <div class="icg"><span class="glyph"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span class="nm">Configurações</span></div>
     </div>
     <p class="intro" style="margin-top:14px;margin-bottom:0"><b>Renomear documentos</b> aplica os nomes atuais das certidões aos PDFs de uma pasta — útil se você renomeou algo na aba de Nomenclatura (mais abaixo) e quer atualizar arquivos antigos. <b>Atualizar processo</b> escolhe a pasta de uma empresa/pessoa já processada e refaz a busca — o programa já pula sozinho o que ainda está válido, então na prática só baixa o que venceu ou nunca saiu.</p>
   </div>
 
   <div class="section">
+    <h2>Configurações</h2>
+    <p class="intro">Fica no ícone de engrenagem, no fim do menu lateral. Perfis e Nomenclatura você vê com print mais abaixo — as outras abas são estas:</p>
+    <div class="grid2">
+      <div class="mini2"><h4>Preferência de Download</h4><p>Pra Receita Federal, Cartão CNPJ e Consulta Consolidada (TCU): escolha entre <b>abrir no navegador</b> (você resolve o captcha, de graça) ou <b>baixar pela API</b> (Infosimples, pago, sem captcha). Também é aqui que se ajusta onde o navegador salva os downloads e se o botão "Abrir pasta" deve usar sempre o Explorer ou o gerenciador de arquivos padrão do Windows.</p></div>
+      <div class="mini2"><h4>API Infosimples</h4><p>Onde colar o token da conta Infosimples, necessário pras opções "Baixar pela API" da aba anterior. Serviço pago e opcional — a Infosimples dá um crédito inicial ao criar a conta.</p></div>
+      <div class="mini2"><h4>Aparência</h4><p>Cor de destaque (6 opções) e tema claro/escuro — o mesmo efeito do botão de sol/lua no menu lateral.</p></div>
+      <div class="mini2"><h4>Sobre</h4><p>Mostra a versão instalada do programa e um jeito rápido de entrar em contato.</p></div>
+    </div>
+  </div>
+
+  <div class="section">
     <h2>O sino de notificações</h2>
-    <p class="intro">Fica no canto superior direito, ao lado do título. Avisa sozinho — sem precisar clicar em nada — quando alguma certidão já baixada está vencida ou perto de vencer (nos próximos 15 dias).</p>
+    <p class="intro">Fica no canto superior direito, ao lado do título. Avisa sozinho — sem precisar clicar em nada — quando alguma certidão já baixada está vencida ou perto de vencer (nos próximos 15 dias), e também quando sai uma versão nova do programa.</p>
     <div class="grid2">
       <div class="mini2">
         <h4>O número no sino</h4>
@@ -277,6 +289,10 @@
       <div class="mini2">
         <h4>Clique numa linha</h4>
         <p>Mostra os detalhes: a empresa/pessoa, o documento e a data de vencimento — com um botão para <b>excluir</b> aquele aviso, se não precisar mais dele.</p>
+      </div>
+      <div class="mini2">
+        <h4>Aviso de versão nova</h4>
+        <p>Quando sai uma atualização, o sino mostra isso também, com um botão <b>Atualizar</b> — baixa sozinho, em segundo plano. No fim, escolha <b>Reiniciar</b> (aplica e reabre na hora) ou <b>Cancelar</b> (continua usando; a troca acontece sozinha na próxima vez que fechar o programa).</p>
       </div>
     </div>
     <p class="tip" style="margin-top:14px">O botão <b>Verificar validade</b> do menu lateral faz essa mesma checagem na hora, sem pedir pasta — é útil se você quer conferir de novo sem esperar reabrir o programa.</p>
@@ -319,7 +335,7 @@
       </details>
       <details>
         <summary>Preciso digitar CNPJ com pontos e barra?</summary>
-        <p>Não precisa. Pode digitar só os números (ou com pontos, barra e traço — tanto faz). O programa entende dos dois jeitos, inclusive os CNPJs novos com letras.</p>
+        <p>Não precisa. Pode digitar só os números (ou com pontos, barra e traço — tanto faz). O programa também entende os CNPJs alfanuméricos (com letras), formato que a Receita Federal passou a emitir para novos cadastros a partir de julho de 2026.</p>
       </details>
       <details>
         <summary>Uma certidão deu “Erro”. Perdi as outras?</summary>
