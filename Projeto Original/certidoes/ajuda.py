@@ -9,7 +9,8 @@ CERTIDOES = {
         "Dívida Ativa da União. Nesta versão, por padrão o programa abre o site da Receita "
         "no seu navegador para você emitir na mão (a Receita bloqueia automação). Nas "
         "Configurações você pode optar por baixar pela API paga (Infosimples) informando o "
-        "token. Para CPF, sempre abre o site (a Receita pede a data de nascimento).",
+        "token. Para CPF, a API também exige a data de nascimento — informe na lista de "
+        "documentos; sem ela, cai automaticamente para o navegador.",
     "cnj_improbidade":
         "Certidão Negativa de Improbidade Administrativa e Inelegibilidade (CNJ). O programa "
         "preenche e emite sozinho (tipo Jurídica para CNPJ, Física para CPF); o reCAPTCHA é "

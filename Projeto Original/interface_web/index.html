@@ -600,7 +600,7 @@
                 <button id="m-nav" class="${c.modo==='navegador'?'on':''}" onclick="setModo('navegador')">Abrir no meu navegador</button>
                 <button id="m-api" class="${c.modo==='api'?'on':''}" onclick="setModo('api')">Baixar pela API</button>
               </div></div>
-            <div class="cfg-sub" style="margin-bottom:0"><b>Abrir no navegador</b> (padrão): a Receita bloqueia automação, então o programa abre o site e você resolve o captcha. <b>Baixar pela API</b> <span class="wip">🧪 Aguardando teste real</span>: usa a Infosimples (pago) — configure o token na aba <b>API Infosimples</b>.</div>
+            <div class="cfg-sub" style="margin-bottom:0"><b>Abrir no navegador</b> (padrão): a Receita bloqueia automação, então o programa abre o site e você resolve o captcha. <b>Baixar pela API</b>: usa a Infosimples (pago) — configure o token na aba <b>API Infosimples</b>. Pra CPF, é preciso informar a data de nascimento na lista de documentos.</div>
           </div>
 
           <div class="cfg-sect">
@@ -636,18 +636,17 @@
           </div>
         </div>
         <div class="cfg-pane" data-pane="api">
-          <div class="cfg-h">API Infosimples <span class="wip">🚧 Em construção</span></div>
-          <div class="cfg-sub">Baixa a Receita automaticamente, sem você resolver captcha. Opcional e pago.</div>
+          <div class="cfg-h">API Infosimples</div>
+          <div class="cfg-sub">Baixa Receita Federal, Cartão CNPJ e Consulta Consolidada (TCU) automaticamente, sem você resolver captcha. Opcional e pago.</div>
           <div class="apibox">
-            <b>O que faz:</b> serviço pago que consulta e baixa certidões pela internet (útil para a Receita Federal, que normalmente exige emissão manual). Cobra por consulta (cerca de R$ 0,26) — e <span class="credito">dão R$ 100,00 de crédito ao criar a conta</span>.
+            <b>O que faz:</b> serviço pago que consulta e baixa certidões pela internet (útil para os órgãos que normalmente exigem emissão manual). Cobra por consulta (cerca de R$ 0,26) — e <span class="credito">dão R$ 100,00 de crédito ao criar a conta</span>.
             <div style="margin-top:8px"><b>Como usar:</b></div>
             <ol>
               <li>Crie uma conta no site <b>infosimples.com</b> (ganha R$ 100 de crédito).</li>
               <li>Gere um <b>token</b> de acesso na sua conta.</li>
-              <li>Cole o token abaixo e, na aba <b>Preferência de Download</b>, escolha <b>Baixar pela API</b>.</li>
+              <li>Cole o token abaixo e, na aba <b>Preferência de Download</b>, escolha <b>Baixar pela API</b> na certidão desejada.</li>
             </ol>
             <a class="apilink" onclick="eel.abrir_link('https://infosimples.com')()">Saiba mais no site da Infosimples <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>
-            <div style="margin-top:10px;color:var(--subtext)">Esta versão gratuita ainda está finalizando o suporte à API — por ora, use "Abrir no navegador".</div>
           </div>
           <div class="campo" style="margin-top:16px"><label>Token da API Infosimples</label>
             <input type="password" id="cfg-token" value="${esc(c.token)}" placeholder="cole seu token aqui"></div>
