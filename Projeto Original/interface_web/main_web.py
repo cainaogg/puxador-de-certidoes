@@ -102,6 +102,7 @@ def carregar_config():
             "tema": c.get("tema", "dark"),
             "pasta_downloads": str(custom or _pasta_downloads_padrao()),
             "pasta_downloads_custom": bool(custom),
+            "abrir_pasta_padrao": bool(c.get("abrir_pasta_programa_padrao", False)),
             "versao": __version__}
 
 
@@ -109,6 +110,11 @@ def carregar_config():
 def salvar_config(modo, modo_cnpj, modo_tcu, token):
     config.salvar(receita_modo=modo, consulta_cnpj_modo=modo_cnpj,
                   tcu_consolidada_modo=modo_tcu, infosimples_token=(token or "").strip())
+
+
+@eel.expose
+def salvar_abrir_pasta_padrao(valor):
+    config.salvar(abrir_pasta_programa_padrao=bool(valor))
 
 
 @eel.expose
@@ -388,12 +394,21 @@ def acao(nome: str) -> None:
         _emit({"t": "log", "m": "Cancelamento solicitado (encerra após a certidão atual)."})
     elif nome == "abrir_pasta":
         PASTA_BASE.mkdir(parents=True, exist_ok=True)
-        # explorer.exe (processo separado) é confiável no .exe; os.startfile
-        # roda numa greenlet do eel e às vezes não abre a janela (COM).
-        try:
-            subprocess.Popen(["explorer", str(PASTA_BASE)])
-        except Exception:  # noqa: BLE001
-            os.startfile(str(PASTA_BASE))  # type: ignore[attr-defined]
+        if config.carregar().get("abrir_pasta_programa_padrao", False):
+            # ShellExecute "open": é o que gerenciadores de arquivo alternativos
+            # (ex.: Directory Opus com "Explorer Replacement") interceptam —
+            # chamar explorer.exe direto ignora esse mecanismo.
+            try:
+                os.startfile(str(PASTA_BASE))  # type: ignore[attr-defined]
+            except Exception:  # noqa: BLE001
+                subprocess.Popen(["explorer", str(PASTA_BASE)])
+        else:
+            # explorer.exe (processo separado) é confiável no .exe; os.startfile
+            # roda numa greenlet do eel e às vezes não abre a janela (COM).
+            try:
+                subprocess.Popen(["explorer", str(PASTA_BASE)])
+            except Exception:  # noqa: BLE001
+                os.startfile(str(PASTA_BASE))  # type: ignore[attr-defined]
         _emit({"t": "log", "m": "Abrindo a pasta de downloads…"})
     elif nome == "escanear":
         threading.Thread(target=_escanear, daemon=True).start()

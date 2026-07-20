@@ -655,6 +655,15 @@
             </div>
             <div class="cfg-sub" style="margin-top:12px;margin-bottom:0">É aqui que o programa procura os PDFs que você baixa manualmente (Receita, Cartão CNPJ, Consulta Consolidada TCU) pra mover e renomear sozinho. Por padrão é a pasta <b>Downloads</b> do Windows — só troque se o seu navegador estiver configurado para salvar em outro lugar.</div>
           </div>
+
+          <div class="cfg-sect">
+            <div class="cfg-subh">Botão "Abrir pasta"</div>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+              <input type="checkbox" id="cfg-abrir-pasta-padrao" ${c.abrir_pasta_padrao?'checked':''} onchange="eel.salvar_abrir_pasta_padrao(this.checked)()">
+              Abrir com o programa padrão do Windows (em vez do Explorer)
+            </label>
+            <div class="cfg-sub" style="margin-top:8px;margin-bottom:0">Marque se você usa outro gerenciador de arquivos no lugar do Explorer (ex.: Directory Opus) e ele estiver configurado para substituí-lo — o programa então pede pro Windows abrir a pasta, em vez de sempre forçar o Explorer.</div>
+          </div>
         </div>
         <div class="cfg-pane" data-pane="api">
           <div class="cfg-h">API Infosimples</div>

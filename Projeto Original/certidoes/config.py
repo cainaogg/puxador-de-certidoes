@@ -40,6 +40,12 @@ PADRAO = {
     # Cartão CNPJ, Consulta Consolidada TCU). Vazio = usa a Downloads padrão do
     # Windows; só é preenchido se o usuário escolher outra em Configurações.
     "pasta_downloads_navegador": "",
+    # Botão "Abrir pasta": False (padrão) abre sempre com explorer.exe, que é o
+    # jeito comprovadamente confiável dentro do .exe. True pede pro Windows abrir
+    # com o programa padrão de pastas (ShellExecute "open") — necessário pra
+    # gerenciadores de arquivo alternativos (ex.: Directory Opus) que substituem
+    # o Explorer via esse mecanismo.
+    "abrir_pasta_programa_padrao": False,
 }
 
 
