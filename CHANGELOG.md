@@ -3,6 +3,45 @@
 Este arquivo resume o que mudou em cada versão do **Puxador de Certidões**
 (apenas a versão original em Python).
 
+## [2.4.0] — 2026-07-19
+
+### Verificação de atualização + auto-atualização
+- O sino agora também avisa quando há uma **versão nova no GitHub**, com um
+  botão **Atualizar** que baixa o `.exe` sozinho. Ao terminar, você escolhe
+  **Reiniciar** (aplica e reabre na hora) ou **Cancelar** (continua usando —
+  a troca acontece sozinha na próxima vez que fechar o programa).
+
+### Certidões pela API (Infosimples) — Cartão CNPJ, TCU e CPF na Receita
+- **Cartão CNPJ** e **Consulta Consolidada (TCU)** ganham a opção **Baixar
+  pela API** em Configurações › Preferência de Download, igual a Receita
+  Federal já tinha — alternativa paga que não depende de captcha nem de
+  navegador.
+- A **Consulta Consolidada (TCU)** também passou a abrir no seu navegador por
+  padrão (em vez de tentar sozinha): o firewall desse serviço específico do
+  TCU bloqueia qualquer navegador automatizado, mesmo com histórico real —
+  testado antes de desistir da automação.
+- **CND Federal para CPF** agora também funciona pela API (antes só CNPJ) —
+  basta informar a data de nascimento na lista de documentos, do jeito que
+  o programa já pedia para a emissão manual.
+- Corrigido um recibo que a Infosimples às vezes devolve em HTML em vez de
+  PDF — o programa detecta e converte para PDF de verdade antes de salvar.
+
+### Correções
+- **Perfil de download vazando entre CNPJ e CPF.** Uma certidão marcada no
+  perfil só para CNPJ (ex.: Comprovante ISSQN) podia ser emitida também para
+  os CPFs do mesmo lote — o programa só olhava se o site aceitava aquele tipo
+  de documento, não o que o perfil realmente pedia. Corrigido.
+- **Importador da pasta Downloads** agora vigia a sessão inteira (não só
+  depois que tudo termina) — documentos manuais são movidos e renomeados
+  assim que você baixa, mesmo com o resto do lote ainda rodando. Ganha mais
+  3 minutos de tolerância depois que a sessão acaba.
+- **Pasta de downloads do navegador agora é configurável** (Configurações ›
+  Preferência de Download) — útil se o seu navegador salva em outro lugar
+  que não a Downloads padrão do Windows.
+- **Configurações vazando da janela.** A tela de Configurações podia ficar
+  maior que a própria janela do programa; agora se ajusta ao tamanho dela. O
+  sino também parou de responder a clique por trás da tela de Configurações.
+
 ## [2.3.0] — 2026-07-18
 
 ### Sino de notificações de vencimento
