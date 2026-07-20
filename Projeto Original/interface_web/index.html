@@ -158,6 +158,13 @@
   .cfg-tab:hover{background:var(--panel);color:var(--text)}
   .cfg-tab.on{background:var(--accent);color:#fff}
   .cfg-tab svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;flex:none}
+  .cfg-sobre{margin-top:auto;padding:12px 8px 2px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:6px}
+  .cfg-sobre .versao{font-size:11px;color:var(--subtext)}
+  .cfg-sobre .autor{font-size:11px;color:var(--subtext)}
+  .cfg-sobre .contact{display:flex;gap:8px}
+  .cfg-sobre .cbtn{width:24px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;color:var(--subtext);cursor:pointer;background:transparent}
+  .cfg-sobre .cbtn:hover{background:var(--panel);color:var(--accent)}
+  .cfg-sobre .cbtn svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8}
   .cfg-main{flex:1;padding:22px 24px;display:flex;flex-direction:column;min-width:0;overflow-y:auto}
   .cfg-main .x{position:absolute;top:16px;right:18px}
   .cfg-pane{display:none;flex:1}
@@ -584,6 +591,20 @@
         <div class="cfg-tab" data-tab="receita" onclick="cfgTab('receita')">${IC_DOC} Preferência de Download</div>
         <div class="cfg-tab" data-tab="api" onclick="cfgTab('api')">${IC_API} API Infosimples</div>
         <div class="cfg-tab" data-tab="aparencia" onclick="cfgTab('aparencia')">${IC_COR} Aparência</div>
+        <div class="cfg-sobre">
+          <div class="autor">Puxador de Certidões v${esc(c.versao||'')}<br>por Cainã Gomes Süffert</div>
+          <div class="contact">
+            <span class="cbtn" title="caina@outlook.com" onclick="eel.abrir_link('mailto:caina@outlook.com')()">
+              <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+            </span>
+            <span class="cbtn" title="Instagram @Cainaogs" onclick="eel.abrir_link('https://www.instagram.com/Cainaogs')()">
+              <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5.5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.1" fill="currentColor" stroke="none"/></svg>
+            </span>
+            <span class="cbtn" title="Contribuir via Pix" onclick="eel.abrir_link('https://nubank.com.br/cobrar/5j8vr/6a5c2207-379e-4e6f-95b6-91fba4553914')()">
+              <span style="display:block;width:14px;height:14px;background-color:currentColor;-webkit-mask:url('data:image/png;base64,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') center/contain no-repeat;mask:url('data:image/png;base64,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') center/contain no-repeat;"></span>
+            </span>
+          </div>
+        </div>
       </div>
       <div class="cfg-main">
         <button class="x" onclick="fecharModal()">✕</button>

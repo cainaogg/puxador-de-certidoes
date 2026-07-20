@@ -32,7 +32,7 @@ from playwright.sync_api import sync_playwright
 if not getattr(sys, "frozen", False):
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from certidoes import ajuda, atualizacao, config, paths  # noqa: E402
+from certidoes import __version__, ajuda, atualizacao, config, paths  # noqa: E402
 from certidoes.base import (  # noqa: E402
     Status, _texto_pdf, documento_no_texto, identificar_certidao, juntar_pdfs,
     nome_base_modulo, nome_documento, renomear_com_validade, so_letras_numeros,
@@ -101,7 +101,8 @@ def carregar_config():
             "accent": c.get("accent", "#3B82F6"),
             "tema": c.get("tema", "dark"),
             "pasta_downloads": str(custom or _pasta_downloads_padrao()),
-            "pasta_downloads_custom": bool(custom)}
+            "pasta_downloads_custom": bool(custom),
+            "versao": __version__}
 
 
 @eel.expose
