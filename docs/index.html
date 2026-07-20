@@ -69,8 +69,19 @@
   .section > p.sub{font-size:13px;color:var(--caption2);margin:0 0 14px}
 
   .cfg-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-  .cfg-card img{width:100%;border-radius:10px;border:1px solid var(--border2);margin-bottom:6px;display:block}
+  .cfg-card .thumb{position:relative;display:block;border-radius:10px;overflow:hidden;margin-bottom:6px}
+  .cfg-card img{width:100%;border:1px solid var(--border2);border-radius:10px;display:block}
   .cfg-card .cap{font-size:12px;color:var(--caption)}
+  .cfg-card .zoom{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    background:rgba(11,12,16,0);opacity:0;transition:background .15s,opacity .15s}
+  .cfg-card .zoom svg{width:28px;height:28px;stroke:#fff;fill:none;stroke-width:2}
+  .cfg-card .thumb:hover .zoom{background:rgba(11,12,16,.55);opacity:1}
+
+  .lightbox{display:none;position:fixed;inset:0;background:rgba(6,7,10,.9);z-index:50;
+    align-items:center;justify-content:center;padding:40px;text-decoration:none}
+  .lightbox:target{display:flex}
+  .lightbox img{max-width:100%;max-height:100%;border-radius:12px;border:1px solid var(--border2)}
+  .lightbox .close{position:absolute;top:20px;right:28px;color:#fff;font-size:26px;line-height:1}
 
   .tbl-wrap{overflow:auto;border:1px solid var(--border);border-radius:12px;margin-bottom:28px}
   table{width:100%;border-collapse:collapse;font-size:13px}
@@ -83,8 +94,11 @@
 
   .faq{display:flex;flex-direction:column;gap:8px}
   .faq details{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
-  .faq summary{font-weight:600;font-size:14px;cursor:pointer;list-style:none}
+  .faq summary{font-weight:600;font-size:14px;cursor:pointer;list-style:none;
+    display:flex;align-items:center;justify-content:space-between;gap:12px}
   .faq summary::-webkit-details-marker{display:none}
+  .faq summary::after{content:"+";color:var(--accent);font-size:20px;font-weight:800;line-height:1;flex:none}
+  .faq details[open] summary::after{content:"–"}
   .faq details p{font-size:13px;color:var(--caption);line-height:1.6;margin:10px 0 0}
 
   .foot{text-align:center;padding:36px 0 60px;border-top:1px solid var(--border);margin-top:32px}
@@ -180,10 +194,34 @@
   <div class="section">
     <h2>Configurações</h2>
     <div class="cfg-grid">
-      <div class="cfg-card"><img src="assets/screenshot-perfis.png" alt="Perfis de download"><div class="cap">Perfis de download</div></div>
-      <div class="cfg-card"><img src="assets/screenshot-nomenclatura.png" alt="Nomenclatura dos Documentos"><div class="cap">Nomenclatura dos Documentos</div></div>
-      <div class="cfg-card"><img src="assets/screenshot-pref-download-2.png" alt="Preferência de Download"><div class="cap">Preferência de Download</div></div>
-      <div class="cfg-card"><img src="assets/screenshot-aparencia.png" alt="Aparência"><div class="cap">Aparência</div></div>
+      <div class="cfg-card">
+        <a class="thumb" href="#lb-perfis" aria-label="Ampliar: Perfis de download">
+          <img src="assets/screenshot-perfis.png" alt="Perfis de download">
+          <span class="zoom"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg></span>
+        </a>
+        <div class="cap">Perfis de download</div>
+      </div>
+      <div class="cfg-card">
+        <a class="thumb" href="#lb-nomenclatura" aria-label="Ampliar: Nomenclatura dos Documentos">
+          <img src="assets/screenshot-nomenclatura.png" alt="Nomenclatura dos Documentos">
+          <span class="zoom"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg></span>
+        </a>
+        <div class="cap">Nomenclatura dos Documentos</div>
+      </div>
+      <div class="cfg-card">
+        <a class="thumb" href="#lb-pref-download" aria-label="Ampliar: Preferência de Download">
+          <img src="assets/screenshot-pref-download-2.png" alt="Preferência de Download">
+          <span class="zoom"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg></span>
+        </a>
+        <div class="cap">Preferência de Download</div>
+      </div>
+      <div class="cfg-card">
+        <a class="thumb" href="#lb-aparencia" aria-label="Ampliar: Aparência">
+          <img src="assets/screenshot-aparencia.png" alt="Aparência">
+          <span class="zoom"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg></span>
+        </a>
+        <div class="cap">Aparência</div>
+      </div>
     </div>
   </div>
 
@@ -250,5 +288,10 @@
   </div>
 
 </div>
+
+<a class="lightbox" id="lb-perfis" href="#!"><span class="close">✕</span><img src="assets/screenshot-perfis.png" alt="Perfis de download (ampliado)"></a>
+<a class="lightbox" id="lb-nomenclatura" href="#!"><span class="close">✕</span><img src="assets/screenshot-nomenclatura.png" alt="Nomenclatura dos Documentos (ampliado)"></a>
+<a class="lightbox" id="lb-pref-download" href="#!"><span class="close">✕</span><img src="assets/screenshot-pref-download-2.png" alt="Preferência de Download (ampliado)"></a>
+<a class="lightbox" id="lb-aparencia" href="#!"><span class="close">✕</span><img src="assets/screenshot-aparencia.png" alt="Aparência (ampliado)"></a>
 </body>
 </html>
