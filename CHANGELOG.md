@@ -3,6 +3,40 @@
 Este arquivo resume o que mudou em cada versão do **Puxador de Certidões**
 (apenas a versão original em Python).
 
+## [2.4.1] — 2026-07-23
+
+### Sobre (Configurações)
+- Nova aba **Sobre** mostra a versão instalada, o criador e ícones de contato
+  (e-mail, Instagram, Pix) — mesmo padrão visual do site do tutorial.
+
+### Preferência de Download
+- Novo interruptor **"Abrir com o programa padrão do Windows"** pro botão
+  Abrir Pasta — útil para quem usa outro gerenciador de arquivos (ex.:
+  Directory Opus) no lugar do Explorer.
+
+### Robustez da automação
+- **Site não responde em 10s → emissão manual na hora.** Módulos que abrem o
+  site direto (TJRS, FGTS, CGU, POA Tributos/ISS, CNDT, CNJ, TCU
+  Inidôneos/Contas, SEFAZ-RS) não ficam mais minutos tentando um site fora do
+  ar — abrem no seu navegador padrão (com o número já copiado) e seguem pro
+  próximo.
+- **Carregou mas travou → 60s e pula.** Unifica o tempo de espera pela
+  captura do documento em 60 segundos (antes variava de 25 a 50 conforme o
+  módulo) antes de gerar o print de erro e passar pro próximo.
+- **Vigia da pasta Downloads também cobre erro de captura**, não só emissão
+  manual — alguns sites (ex.: POA) confirmam a emissão mas só falham ao
+  capturar o arquivo; agora ainda dá uma segunda chance de importar sozinho.
+- Clique "solto" (Esc + canto vazio da página) também acontece logo após
+  confirmar a emissão, não só antes de fechar a aba — ajuda em sites que só
+  liberam o download depois de uma interação do usuário.
+
+### Correções
+- **Auto-atualização quebrava em pastas com acento** (ex.: "Puxador de
+  Certidões") — o `.bat` de troca do `.exe` era gerado sem o encoding certo
+  e o Windows corrompia o caminho. Corrigido.
+- Texto do diálogo "Atualização pronta" reformulado (tinha uma quebra de
+  linha manual que deixava a frase com corte estranho).
+
 ## [2.4.0] — 2026-07-19
 
 ### Verificação de atualização + auto-atualização
