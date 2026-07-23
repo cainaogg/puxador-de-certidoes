@@ -22,6 +22,7 @@ from ..base import (
     ModuloCertidao,
     Resultado,
     Status,
+    abrir_site_ou_manual,
     emitir_e_capturar,
     esperar_recaptcha,
     so_letras_numeros,
@@ -62,7 +63,9 @@ class CNJImprobidade(ModuloCertidao):
 
         # 2) Preencher o formulário.
         ctx.log("CNJ: abrindo o formulário…")
-        page.goto(self.url, wait_until="domcontentloaded", timeout=60_000)
+        if not abrir_site_ou_manual(page, ctx, "CNJ", self.url):
+            return Resultado(self.id, Status.MANUAL,
+                             "O site do CNJ não respondeu a tempo. Abri no seu navegador padrão.")
         page.wait_for_timeout(3_000)
         page.check("#tipoPessoaJuridica" if eh_cnpj else "#tipoPessoaFisica")
         page.fill(self.SEL_CPF_CNPJ, ctx.documento.numero)  # dígitos (maxlength 14)

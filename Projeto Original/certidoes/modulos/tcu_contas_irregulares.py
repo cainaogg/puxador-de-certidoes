@@ -14,7 +14,7 @@ from __future__ import annotations
 import time
 
 from . import _tcu
-from ..base import Contexto, ModuloCertidao, Resultado, Status
+from ..base import Contexto, ModuloCertidao, Resultado, Status, abrir_site_ou_manual
 from ..documento import TipoDoc
 
 
@@ -29,7 +29,9 @@ class TCUContasIrregulares(ModuloCertidao):
 
     def executar(self, page, ctx: Contexto) -> Resultado:
         ctx.log("TCU Contas Irregulares: abrindo o site…")
-        page.goto(self.url, wait_until="domcontentloaded", timeout=60_000)
+        if not abrir_site_ou_manual(page, ctx, "TCU Contas Irregulares", self.url):
+            return Resultado(self.id, Status.MANUAL,
+                             "O site do TCU não respondeu a tempo. Abri no seu navegador padrão.")
         page.wait_for_timeout(3_000)
         return _tcu.com_retry(page, ctx, self.url, "TCU Contas Irregulares",
                               lambda pg: self._tentar(pg, ctx))
@@ -56,7 +58,7 @@ class TCUContasIrregulares(ModuloCertidao):
         erro = page.locator(
             "text=/inválido|verifique os|não foi possível|pendênc|excede|limite de/i"
         )
-        fim = time.time() + 50
+        fim = time.time() + 60
         while time.time() < fim:
             if baixar.count() and baixar.first.is_visible():
                 return _tcu.baixar_para(page, ctx, self.id, baixar, "TCU Contas Irregulares")

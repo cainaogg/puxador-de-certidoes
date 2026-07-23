@@ -15,7 +15,7 @@ import re
 import time
 
 from .. import captcha_ocr
-from ..base import Contexto, ModuloCertidao, Resultado, Status
+from ..base import Contexto, ModuloCertidao, Resultado, Status, abrir_site_ou_manual
 from ..documento import TipoDoc
 
 TIMEOUT_CAPTCHA_MS = 5 * 60 * 1000  # espera no modo assistido
@@ -45,7 +45,9 @@ class CNDT(ModuloCertidao):
 
     def executar(self, page, ctx: Contexto) -> Resultado:
         ctx.log("CNDT: abrindo o site do TST…")
-        page.goto(self.url, wait_until="domcontentloaded", timeout=60_000)
+        if not abrir_site_ou_manual(page, ctx, "CNDT", self.url):
+            return Resultado(self.id, Status.MANUAL,
+                             "O site do TST não respondeu a tempo. Abri no seu navegador padrão.")
         page.wait_for_timeout(2_000)
         self._esperar_captcha(page)
         try:

@@ -311,6 +311,7 @@ def executar_lote(
                 # em seguida de qualquer forma.
                 try:
                     page.bring_to_front()
+                    page.keyboard.press("Escape")
                     page.mouse.click(5, 5)
                 except Exception:  # noqa: BLE001
                     pass

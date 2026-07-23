@@ -12,6 +12,7 @@ from ..base import (
     ModuloCertidao,
     Resultado,
     Status,
+    abrir_site_ou_manual,
     emitir_e_capturar,
     esperar_recaptcha,
 )
@@ -48,7 +49,9 @@ class POAISS(ModuloCertidao):
     def executar(self, page, ctx: Contexto) -> Resultado:
         eh_cnpj = ctx.documento.tipo is TipoDoc.CNPJ
         ctx.log("POA ISS: abrindo o site…")
-        page.goto(self.url, wait_until="domcontentloaded", timeout=60_000)
+        if not abrir_site_ou_manual(page, ctx, "POA ISS", self.url):
+            return Resultado(self.id, Status.MANUAL,
+                             "O site da Procempa não respondeu a tempo. Abri no seu navegador padrão.")
         page.wait_for_timeout(2_500)
 
         # Garante a aba "Emitir Inscrição" (ignora "Autenticar Inscrição").

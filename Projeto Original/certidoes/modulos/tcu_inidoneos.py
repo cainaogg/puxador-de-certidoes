@@ -8,7 +8,7 @@ aguarda o ALTCHA resolver e o botão "Baixar Certidão" aparecer. Mapeado 2026-0
 from __future__ import annotations
 
 from . import _tcu
-from ..base import Contexto, ModuloCertidao, Resultado, Status
+from ..base import Contexto, ModuloCertidao, Resultado, Status, abrir_site_ou_manual
 from ..documento import TipoDoc
 
 
@@ -23,7 +23,9 @@ class TCUInidoneos(ModuloCertidao):
 
     def executar(self, page, ctx: Contexto) -> Resultado:
         ctx.log("TCU Inidôneos: abrindo o site…")
-        page.goto(self.url, wait_until="domcontentloaded", timeout=60_000)
+        if not abrir_site_ou_manual(page, ctx, "TCU Inidôneos", self.url):
+            return Resultado(self.id, Status.MANUAL,
+                             "O site do TCU não respondeu a tempo. Abri no seu navegador padrão.")
         page.wait_for_timeout(3_000)
         return _tcu.com_retry(page, ctx, self.url, "TCU Inidôneos",
                               lambda pg: self._tentar(pg, ctx))
@@ -46,7 +48,7 @@ class TCUInidoneos(ModuloCertidao):
             "button:has-text('Baixar Certidão'), a:has-text('Baixar Certidão')"
         )
         try:
-            baixar.first.wait_for(state="visible", timeout=45_000)
+            baixar.first.wait_for(state="visible", timeout=60_000)
         except Exception:  # noqa: BLE001
             msg = _tcu.mensagem_erro(page) or "não apareceu 'Baixar Certidão' (o captcha expirou?)"
             return Resultado(self.id, Status.ERRO, f"TCU Inidôneos: {msg}")

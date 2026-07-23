@@ -12,7 +12,14 @@ e reportado como erro claro (não confundir com sucesso).
 
 from __future__ import annotations
 
-from ..base import Contexto, ModuloCertidao, Resultado, Status, salvar_pagina_como_pdf
+from ..base import (
+    Contexto,
+    ModuloCertidao,
+    Resultado,
+    Status,
+    abrir_site_ou_manual,
+    salvar_pagina_como_pdf,
+)
 from ..documento import TipoDoc
 
 # Texto que indica que a certidão não pôde ser emitida (ex.: pendências).
@@ -34,7 +41,9 @@ class SefazRS(ModuloCertidao):
 
     def executar(self, page, ctx: Contexto) -> Resultado:
         ctx.log("SEFAZ-RS: abrindo o site…")
-        page.goto(self.url, wait_until="domcontentloaded", timeout=60_000)
+        if not abrir_site_ou_manual(page, ctx, "SEFAZ-RS", self.url):
+            return Resultado(self.id, Status.MANUAL,
+                             "O site da SEFAZ-RS não respondeu a tempo. Abri no seu navegador padrão.")
         page.wait_for_timeout(3_000)
 
         campo = "campoCnpj" if ctx.documento.tipo is TipoDoc.CNPJ else "campoCpf"
@@ -64,7 +73,7 @@ class SefazRS(ModuloCertidao):
         ctx.log("SEFAZ-RS: enviando…")
         page.click("#btnEnviar", timeout=15_000)
 
-        for _ in range(25):
+        for _ in range(60):
             page.wait_for_timeout(1_000)
             if "d" in baixados:
                 break

@@ -13,7 +13,14 @@ podem precisar de ajuste fino contra o site real. Pontos marcados com
 
 from __future__ import annotations
 
-from ..base import Contexto, ModuloCertidao, Resultado, Status, salvar_pagina_como_pdf
+from ..base import (
+    Contexto,
+    ModuloCertidao,
+    Resultado,
+    Status,
+    abrir_site_ou_manual,
+    salvar_pagina_como_pdf,
+)
 from ..documento import TipoDoc
 
 
@@ -40,7 +47,9 @@ class FGTS(ModuloCertidao):
         # normalmente ("não encontrado" para quem não tem cadastro) — o formulário
         # não rejeita CPF. Os passos de Visualizar/Imprimir são iguais ao fluxo CNPJ.
         ctx.log("FGTS: abrindo o site da Caixa…")
-        page.goto(self.url, wait_until="domcontentloaded", timeout=60_000)
+        if not abrir_site_ou_manual(page, ctx, "FGTS", self.url):
+            return Resultado(self.id, Status.MANUAL,
+                             "O site da Caixa não respondeu a tempo. Abri no seu navegador padrão.")
 
         # 1) Tipo de inscrição é um <select> com as opções CNPJ/CPF.
         rotulo = "CNPJ" if ctx.documento.tipo is TipoDoc.CNPJ else "CPF"

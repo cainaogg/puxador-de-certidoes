@@ -13,7 +13,14 @@ from __future__ import annotations
 
 import time
 
-from ..base import Contexto, ModuloCertidao, Resultado, Status, salvar_pagina_como_pdf
+from ..base import (
+    Contexto,
+    ModuloCertidao,
+    Resultado,
+    Status,
+    abrir_site_ou_manual,
+    salvar_pagina_como_pdf,
+)
 from ..documento import TipoDoc
 
 TIMEOUT_CAPTCHA_S = 5 * 60
@@ -39,7 +46,9 @@ class CGUCorrecional(ModuloCertidao):
 
     def executar(self, page, ctx: Contexto) -> Resultado:
         ctx.log("CGU: abrindo o site…")
-        page.goto(self.url, wait_until="domcontentloaded", timeout=60_000)
+        if not abrir_site_ou_manual(page, ctx, "CGU", self.url):
+            return Resultado(self.id, Status.MANUAL,
+                             "O site da CGU não respondeu a tempo. Abri no seu navegador padrão.")
         page.wait_for_timeout(6_000)
 
         # 1) Entrar em "Emitir Certidão de Entes Privados ou Agentes Públicos".

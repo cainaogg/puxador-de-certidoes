@@ -22,6 +22,7 @@ from ..base import (
     ModuloCertidao,
     Resultado,
     Status,
+    abrir_site_ou_manual,
     emitir_e_capturar,
     so_letras_numeros,
 )
@@ -54,7 +55,9 @@ class TJRSFalencia(ModuloCertidao):
 
         # 2) Abre o formulário e preenche.
         ctx.log("TJRS: abrindo o formulário…")
-        page.goto(self.url, wait_until="domcontentloaded", timeout=60_000)
+        if not abrir_site_ou_manual(page, ctx, "TJRS", self.url):
+            return Resultado(self.id, Status.MANUAL,
+                             "O site do TJRS não respondeu a tempo. Abri no seu navegador padrão.")
         page.wait_for_timeout(2_500)
         page.select_option("select#tipoDocumento", label=_OPCAO_FALENCIA)
         page.wait_for_timeout(1_000)
@@ -73,7 +76,7 @@ class TJRSFalencia(ModuloCertidao):
         def _emitir() -> None:
             page.get_by_text("Emitir Documento", exact=True).first.click(timeout=10_000)
 
-        res = emitir_e_capturar(page, ctx, self.id, "TJRS", _emitir, timeout=40)
+        res = emitir_e_capturar(page, ctx, self.id, "TJRS", _emitir)
         if res.status is not Status.OK and alertas:
             return Resultado(self.id, Status.ERRO, f"TJRS recusou: {alertas[-1]}")
         return res

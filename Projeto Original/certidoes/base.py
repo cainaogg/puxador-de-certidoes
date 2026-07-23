@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import base64
 import re
+import subprocess
+import webbrowser
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 from enum import Enum
@@ -11,6 +13,25 @@ from pathlib import Path
 from typing import Callable, Optional, Set
 
 from .documento import Documento, DocumentoInvalido, TipoDoc, detectar
+
+
+def abrir_navegador(url: str, numero: Optional[str] = None, extra: str = "") -> None:
+    """Abre a URL no navegador do sistema. Copia para o clipboard o `numero`
+    (só dígitos/letras, sem pontuação — mantém letras do CNPJ alfanumérico) e, se
+    houver, `extra` (ex.: data de nascimento) numa segunda linha — assim o usuário
+    cola (Ctrl+V) ou usa o bookmarklet, sem automação contra o órgão."""
+    partes = []
+    if numero:
+        partes.append(re.sub(r"[^0-9A-Za-z]", "", numero).upper())
+    if extra:
+        partes.append(extra.strip())
+    if partes:
+        try:
+            # clip.exe: seta o clipboard do Windows e persiste após o processo.
+            subprocess.run(["clip"], input="\n".join(partes), text=True, timeout=5)
+        except Exception:  # noqa: BLE001  (clipboard é conveniência; nunca deve travar)
+            pass
+    webbrowser.open(url)
 
 
 class Status(str, Enum):
@@ -102,6 +123,22 @@ def _nome_arquivo_seguro(nome: str) -> str:
     return re.sub(r'[\\/:*?"<>|]', "-", nome).strip()
 
 
+def abrir_site_ou_manual(page, ctx, nome: str, url: str, timeout: int = 10_000) -> bool:
+    """Tenta carregar `url` no Playwright; se o site não responder a tempo, desiste e
+    abre no navegador padrão do usuário (copiando o número pro clipboard, como as
+    certidões manuais). Devolve True se carregou normalmente, False se caiu pro
+    navegador padrão — nesse caso o chamador deve devolver Status.MANUAL na hora,
+    em vez de ficar minutos esperando um site fora do ar."""
+    try:
+        page.goto(url, wait_until="domcontentloaded", timeout=timeout)
+        return True
+    except Exception:  # noqa: BLE001
+        ctx.log(f"{nome}: o site não respondeu em {timeout // 1000}s — abrindo no seu "
+                "navegador padrão para você emitir manualmente.")
+        abrir_navegador(url, ctx.documento.numero)
+        return False
+
+
 _RECAPTCHA_TOKEN_JS = (
     "() => { let m = 0; document.querySelectorAll"
     "(\"textarea[name='g-recaptcha-response']\").forEach"
@@ -139,7 +176,7 @@ def esperar_recaptcha(page, ctx, nome: str = "", head_start: int = 25,
     return False
 
 
-def emitir_e_capturar(page, ctx, modulo_id: str, nome: str, clicar, timeout: int = 45):
+def emitir_e_capturar(page, ctx, modulo_id: str, nome: str, clicar, timeout: int = 60):
     """Aciona a emissão (`clicar`) e captura o documento de forma robusta.
 
     Cobre os dois jeitos que o SIAT/POA entrega a certidão:
@@ -194,6 +231,15 @@ def emitir_e_capturar(page, ctx, modulo_id: str, nome: str, clicar, timeout: int
 
     try:
         clicar()
+        # Alguns sites só de fato iniciam o download/abrem a nova aba depois de um
+        # clique "solto" na página (ex.: perderam o gesto de usuário do clique
+        # acima, ou têm um popup — tradução, extensão — roubando o foco). Um Esc
+        # + clique num canto vazio, sem mexer no formulário já preenchido.
+        try:
+            page.keyboard.press("Escape")
+            page.mouse.click(5, 5)
+        except Exception:  # noqa: BLE001
+            pass
 
         caminho = ctx.caminho_pdf(modulo_id)
         fim = time.time() + timeout
