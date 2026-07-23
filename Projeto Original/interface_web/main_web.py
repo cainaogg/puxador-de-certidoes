@@ -560,7 +560,11 @@ def _rodar(entries, mods_cnpj, mods_cpf) -> None:
                                            _cancel, nasc, nome, documento_pasta=donos[i])
                 grupo = _pasta_do_grupo(PASTA_BASE, donos[i])
                 for r in resultados:
-                    if r.status is Status.MANUAL:
+                    # MANUAL: o órgão bloqueou automação de propósito. ERRO aqui também
+                    # entra na vigia: alguns módulos (ex.: POA) confirmam a emissão e só
+                    # falham ao CAPTURAR o arquivo (aba que fecha rápido demais, ou o
+                    # usuário fecha a janela cedo) — o PDF pode já estar na Downloads.
+                    if r.status in (Status.MANUAL, Status.ERRO):
                         registrar_pendencia(r.modulo_id, doc.numero, grupo)
 
         if fila_manual and not _cancel.is_set():
