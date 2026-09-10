@@ -6,7 +6,11 @@ com repetição — emitir é grátis e o captcha recarrega à vontade, então s
 captcha falhar ele tenta outro. Se o OCR não estiver disponível (deps ausentes)
 ou esgotar as tentativas, cai no **modo assistido** (você digita na janela).
 
-Seletores JSF do TST mapeados em 2026-06-20 / 2026-07-09.
+Site remodelado pelo TST em 2026-09 (stateless, fetch + blob; sem JSF/`.faces`):
+  - GET  /gerarCertidao  → formulário; `/api/captcha` devolve {token, imagem b64}
+  - POST /api/certidao {cpfCnpj, tokenDesafio, resposta} → PDF (blob/download)
+    ou 4xx {"erro": "..."} (captcha errado, CNPJ inválido, etc.)
+Seletores remapeados em 2026-09-10.
 """
 
 from __future__ import annotations
@@ -32,15 +36,16 @@ class CNDT(ModuloCertidao):
     id = "cndt_trabalhista"
     nome = "CND Trabalhista (CNDT)"
     descricao = "TST — resolve o captcha sozinho (offline); se falhar, modo assistido."
-    url = "https://cndt-certidao.tst.jus.br/gerarCertidao.faces"
+    url = "https://cndt-certidao.tst.jus.br/gerarCertidao"
     requer_captcha = True
     implementado = True
     aceita = frozenset({TipoDoc.CNPJ, TipoDoc.CPF})
 
-    SEL_CPF_CNPJ = '[id="gerarCertidaoForm:cpfCnpj"]'
-    SEL_CAMPO_CAPTCHA = "#idCampoResposta"
-    SEL_IMG = "#idImgBase64"
-    SEL_EMITIR = '[id="gerarCertidaoForm:btnEmitirCertidao"]'
+    SEL_CPF_CNPJ = "#cpfCnpj"
+    SEL_CAMPO_CAPTCHA = "#captcha-resposta"
+    SEL_IMG = "#captcha-imagem"
+    SEL_EMITIR = "#botao-emitir"
+    SEL_MENSAGENS = "#mensagens"
     MAX_TENTATIVAS = 8
 
     def executar(self, page, ctx: Contexto) -> Resultado:
@@ -48,7 +53,6 @@ class CNDT(ModuloCertidao):
         if not abrir_site_ou_manual(page, ctx, "CNDT", self.url):
             return Resultado(self.id, Status.MANUAL,
                              "O site do TST não respondeu a tempo. Abri no seu navegador padrão.")
-        page.wait_for_timeout(2_000)
         self._esperar_captcha(page)
         try:
             page.fill(self.SEL_CPF_CNPJ, ctx.documento.formatado, timeout=15_000)
@@ -67,7 +71,7 @@ class CNDT(ModuloCertidao):
 
     # ------------------------------------------------------------- automático
     def _auto(self, page, ctx: Contexto):
-        """Resolve o captcha com OCR, com retry. Devolve Resultado OK ou None."""
+        """Resolve o captcha com OCR, com retry. Devolve Resultado (OK ou ERRO) ou None."""
         baixados: dict = {}
         novas: list = []
         page.on("download", lambda d: baixados.setdefault("d", d))
@@ -78,8 +82,8 @@ class CNDT(ModuloCertidao):
                 src = page.eval_on_selector(self.SEL_IMG, "e => e.src")
             except Exception:  # noqa: BLE001
                 return None
-            texto = captcha_ocr.ler_data_uri(src)
-            if not re.fullmatch(r"[a-z0-9]{6}", texto):
+            texto = (captcha_ocr.ler_data_uri(src) or "").strip()
+            if not re.fullmatch(r"[a-zA-Z0-9]{6}", texto):
                 ctx.log(f"CNDT: captcha ilegível ({texto!r}); tentando outro…")
                 if not self._recarregar(page, ctx):
                     return None
@@ -99,12 +103,18 @@ class CNDT(ModuloCertidao):
                 ctx.log(f"CNDT: salvo em {caminho.name} (captcha resolvido sozinho).")
                 return Resultado(self.id, Status.OK, "Certidão salva.", caminho)
 
+            # O site recusou de forma definitiva? (CNPJ/CPF inválido) — não adianta insistir.
+            msg = self._mensagem_erro(page)
+            if msg and "inv" in msg.lower() and ("cnpj" in msg.lower() or "cpf" in msg.lower()):
+                return Resultado(self.id, Status.ERRO,
+                                 f"O site do TST recusou o documento: {msg}")
+
             if not self._recarregar(page, ctx):
                 return None
         return None  # esgotou as tentativas
 
-    def _capturar(self, page, ctx: Contexto, baixados: dict, novas: list, prazo: int = 12):
-        """Espera o PDF após emitir (download ou aba-PDF). None se não vier."""
+    def _capturar(self, page, ctx: Contexto, baixados: dict, novas: list, prazo: int = 20):
+        """Espera o PDF após emitir (download/blob ou aba-PDF). None se não vier."""
         caminho = ctx.caminho_pdf(self.id)
         fim = time.time() + prazo
         while time.time() < fim:
@@ -126,17 +136,28 @@ class CNDT(ModuloCertidao):
                         return caminho
                 except Exception:  # noqa: BLE001
                     continue
+            # erro já visível na tela? sai do loop pra retry mais rápido.
+            if self._mensagem_erro(page):
+                return None
             try:
                 page.wait_for_timeout(700)
             except Exception:  # noqa: BLE001
                 time.sleep(0.7)
         return None
 
+    def _mensagem_erro(self, page) -> str:
+        try:
+            return page.evaluate(
+                "() => { const e=document.querySelector('#mensagens');"
+                " return (e && !e.className.includes('oculto') && e.textContent.trim()) || ''; }"
+            ) or ""
+        except Exception:  # noqa: BLE001
+            return ""
+
     def _recarregar(self, page, ctx: Contexto) -> bool:
         """Recarrega o formulário (novo captcha) e repõe o CNPJ."""
         try:
             page.goto(self.url, wait_until="domcontentloaded", timeout=60_000)
-            page.wait_for_timeout(1_200)
             self._esperar_captcha(page)
             page.fill(self.SEL_CPF_CNPJ, ctx.documento.formatado, timeout=15_000)
             return True
@@ -146,9 +167,10 @@ class CNDT(ModuloCertidao):
     def _esperar_captcha(self, page) -> None:
         try:
             page.wait_for_function(
-                "() => { const e=document.querySelector('#idImgBase64');"
-                " return e && e.src && e.src.startsWith('data:image'); }",
-                timeout=15_000,
+                "() => { const e=document.querySelector('#captcha-imagem');"
+                " return e && e.src && e.src.startsWith('data:image')"
+                " && e.complete && e.naturalWidth > 50; }",
+                timeout=20_000,
             )
         except Exception:  # noqa: BLE001
             pass
