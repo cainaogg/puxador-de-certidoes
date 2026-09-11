@@ -3,6 +3,21 @@
 Este arquivo resume o que mudou em cada versão do **Puxador de Certidões**
 (apenas a versão original em Python).
 
+## [2.4.2] — 2026-09-10
+
+### Correções
+- **CND Trabalhista (CNDT) parou de funcionar.** O TST reconstruiu o site
+  (setembro/2026): nova stack sem JSF/`.faces`, fluxo `fetch` + blob — todos
+  os seletores antigos sumiram. Módulo reescrito para o site novo; captcha
+  continua resolvido sozinho (OCR offline), com o mesmo retry e modo
+  assistido de antes. Verificado ao vivo com emissões reais.
+
+### Melhorias
+- Botão **"Verificar validade"** agora também confere se há versão nova do
+  programa, sob demanda — antes só checava automaticamente ao abrir.
+- Diálogo "Atualização pronta" avisa que a troca do `.exe` pode levar até um
+  minuto (antivírus escaneando o arquivo recém-baixado).
+
 ## [2.4.1] — 2026-07-23
 
 ### Sobre (Configurações)
